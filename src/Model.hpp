@@ -1,9 +1,6 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -75,13 +72,13 @@ class Mesh {
         // vertex colors
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
-
         glBindVertexArray(0);
     }
 };
 
 class Model {
    public:
+    bool visibility, control;
     std::vector<Mesh> meshes;
     std::uint32_t numMeshes;
     glm::vec3 translation;
@@ -89,12 +86,22 @@ class Model {
     glm::vec3 scale;
     glm::mat4 modelMatrix;
 
+    float _translation[3], _rotation[3], _scale[3];
+
     Model(std::string const& path) {
         loadmodel(path);
+
+        for (int i = 0; i < 3; ++i) {
+            _translation[i] = _rotation[i] = 0.0f;
+            _scale[i] = 1.0f;
+        }
+
         this->translation = glm::vec3(0.0f, 0.0f, 0.0f);
         this->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
         this->scale = glm::vec3(1.0f, 1.0f, 1.0f);
         this->modelMatrix = glm::mat4(1.0f);
+        visibility = true;
+        control = false;
     }
 
     // draws the model, and thus all its meshes
@@ -103,6 +110,38 @@ class Model {
     //         this->meshes[i].Draw(shader, modelMatrix);
     // }
 
+    void updateTransforms() {
+        this->translation = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
+        this->rotation = glm::vec3(this->_rotation[0], this->_rotation[1], this->_rotation[2]);
+        this->scale = glm::vec3(this->_scale[0], this->_scale[1], this->_scale[2]);
+        this->updateModelMatrix();
+    }
+
+    // void updateTransforms(const float* translation, const float* rotation, const float* scale) {
+    //     if (this->control) {
+    //         for (int i = 0; i < 3; ++i) {
+    //             _translation[i] = translation[i];
+    //             _rotation[i] = rotation[i];
+    //             _scale[i] = scale[i];
+    //         }
+    //         this->translation = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
+    //         this->rotation = glm::vec3(this->_rotation[0], this->_rotation[1], this->_rotation[2]);
+    //         this->scale = glm::vec3(this->_scale[0], this->_scale[1], this->_scale[2]);
+    //         this->updateModelMatrix();
+    //     }
+    // }
+
+    void updateGlobalTransforms(float* translation, float* rotation, float* scale) {
+        if (this->control) {
+            for (int i = 0; i < 3; ++i) {
+                translation[i] = _translation[i];
+                rotation[i] = _rotation[i];
+                scale[i] = _scale[i];
+            }
+        }
+    }
+
+   private:
     void updateModelMatrix() {
         this->modelMatrix = glm::translate(glm::mat4(1.0f), this->translation);
         this->modelMatrix = glm::rotate(this->modelMatrix, glm::radians(this->rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -110,8 +149,6 @@ class Model {
         this->modelMatrix = glm::rotate(this->modelMatrix, glm::radians(this->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         this->modelMatrix = glm::scale(this->modelMatrix, this->scale);
     }
-
-   private:
     void loadmodel(const std::string path) {
         Assimp::Importer importer;
 
@@ -129,7 +166,6 @@ class Model {
         glm::mat4 blenderToOpenGL = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
         for (std::uint32_t i = 0u; i < scene->mNumMeshes; ++i) {
-            std::cout << "Mesh #" << i << ":" << std::endl;
             aiMesh* mesh = scene->mMeshes[i];
 
             // Extract Material for this Mesh
@@ -141,19 +177,14 @@ class Model {
             vertices.reserve(mesh->mNumVertices);
 
             for (std::uint32_t j = 0; j < mesh->mNumVertices; ++j) {
-                aiVector3D position = mesh->mVertices[j];
-                std::cout << "    Vertex #" << j << ": (" << position.x << ", " << position.y << ", " << position.z << ")" << std::endl;
-
                 Vertex vertex;
                 glm::vec3 vector;
                 vector.x = mesh->mVertices[j].x;
                 vector.y = mesh->mVertices[j].y;
                 vector.z = mesh->mVertices[j].z;
-
                 // vertex.position = vector;
 
                 glm::vec4 transformed = blenderToOpenGL * glm::vec4(vector, 1.0);
-                std::cout << "    Vertex #" << j << ": (" << transformed.x << ", " << transformed.y << ", " << transformed.z << ")" << std::endl;
                 vertex.position = glm::vec3(transformed.x, transformed.y, transformed.z);
 
                 vertex.color = glm::vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a);
@@ -165,7 +196,6 @@ class Model {
             std::vector<std::uint32_t> indices;
             indices.reserve(mesh->mNumFaces * 3u);
             for (std::uint32_t k = 0u; k < mesh->mNumFaces; ++k) {
-                std::cout << "    Face #" << k << ": (" << mesh->mFaces[k].mIndices[0u] << ", " << mesh->mFaces[k].mIndices[1u] << ", " << mesh->mFaces[k].mIndices[2u] << ")" << std::endl;
                 indices.push_back(mesh->mFaces[k].mIndices[0u]);
                 indices.push_back(mesh->mFaces[k].mIndices[1u]);
                 indices.push_back(mesh->mFaces[k].mIndices[2u]);

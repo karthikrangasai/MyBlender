@@ -1,5 +1,5 @@
 # Idea
-- Objects (Only one in the scene at once)
+- [x] Objects (Only one in the scene at once)
 	- Self made
 		- Cube
 		- Cuboid
@@ -7,27 +7,21 @@
 	- From blender
 		- Utah's pot
 		- Small basic aliens
-	- Get text to vertices mapper (Extra)
-		- Then we can take a word as input and create a 2D Thingy
-- Transformations (GUI based controls)
+- [x] Transformations (GUI based controls)
 	- Translate
 	- Rotate
 	- Scale
-- Shader Class
-	- Red Color
-	- Green Color
-	- Blue Color
-	- Disco color
-	- Trippy color
-- Camera Class : https://learnopengl.com/Getting-started/Camera
+- [x] Shader Class
+	- Single shader that reads color data from model and displays
+- [x] Camera Class
 	- World moves around the camera mechanism
-	- WASD = movement (Pan)
-	- Scroll = Zoom
-	- J,K,L = Pitch, Yaw, Roll controls
+	- W,A,S,D,Q,Z = FPS Movement
+	- I,J,K,L = Pitch, Yaw, Roll controls
 
 # Code
 - [ ] Rewrite the `Shader` class to read from files
 - [x] Change the `main.cpp` file
 - [x] Understand the views
-- [ ] Change `Camera` class - Yaw and Pitch to {I,J,K,L} controls
-	- [ ] Add Shift + {A,D,Q,Z} for pan pinned to Center
+- [x] Change `Camera` class 
+	- [x] Yaw and Pitch to {I,J,K,L} controls
+	- [x] Add arrow keys for pan pinned to Camera Center

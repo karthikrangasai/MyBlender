@@ -48,7 +48,9 @@ enum Camera_Movement {
     PITCH_UP,
     PITCH_DOWN,
     YAW_RIGHT,
-    YAW_LEFT
+    YAW_LEFT,
+    ROLL_RIGHT,
+    ROLL_LEFT
 };
 
 enum Camera_Movement_State {
@@ -87,12 +89,15 @@ class Camera {
 
     // constructor with vectors
     Camera() : Origin(0.0f, 0.0f, 0.0f) {
-        this->Position = glm::vec3(5.0f, 5.0f, 5.0f);
+        this->Position = glm::vec3(7.0f, 7.0f, 7.0f);
         this->WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         this->Up = glm::vec3(0.0f, 1.0f, 0.0f);
         this->Center = glm::vec3(0.0f, 0.0f, 0.0f);
 
-        this->updateFrontVector();
+        this->Front = this->Center - this->Position;
+        this->distanceFromCenter = glm::distance(this->Position, this->Center);                                            // r = sqrt(x^2 + y^2 + z^2)
+        this->Yaw = glm::atan(this->Front.z, this->Front.x);                                                               // atan(z/x)
+        this->Pitch = glm::atan(this->Front.y, glm::sqrt(glm::pow(this->Front.x, 2.0f) + glm::pow(this->Front.z, 2.0f)));  // atan(y / sqrt(x^2 + z^2))
 
         this->MovementSpeed = SPEED;
         this->MouseSensitivity = SENSITIVITY;
@@ -105,9 +110,6 @@ class Camera {
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix() const {
         return this->viewMatrix;
-        // return glm::lookAt(Position, Center, Up);
-        // return glm::lookAt(Position, Position + Front, Up);
-        // return glm::lookAt(Position, glm::vec3(0.0f, 0.0f, 0.0f), Up);
     }
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -115,26 +117,32 @@ class Camera {
         float velocity = MovementSpeed * deltaTime;
         if (direction == FORWARD) {
             Position += Front * velocity;
+            this->Center = this->Position + this->Front;
             this->State = NON_PINNED;
         }
         if (direction == BACKWARD) {
             Position -= Front * velocity;
+            this->Center = this->Position + this->Front;
             this->State = NON_PINNED;
         }
         if (direction == LEFT) {
             Position -= Right * velocity;
+            this->Center = this->Position + this->Front;
             this->State = NON_PINNED;
         }
         if (direction == RIGHT) {
             Position += Right * velocity;
+            this->Center = this->Position + this->Front;
             this->State = NON_PINNED;
         }
         if (direction == UP) {
             Position += Up * velocity;
+            this->Center = this->Position + this->Front;
             this->State = NON_PINNED;
         }
         if (direction == DOWN) {
             Position -= Up * velocity;
+            this->Center = this->Position + this->Front;
             this->State = NON_PINNED;
         }
 
@@ -160,50 +168,33 @@ class Camera {
         }
 
         if (direction == PITCH_UP) {
-            Pitch += SENSITIVITY;
-            // this->updateCenterVector(SENSITIVITY, glm::vec3(1.0f, 0.0f, 0.0f));
-            this->updateCenterVector(SENSITIVITY, Right);
+            Pitch += this->MouseSensitivity;
+            this->updateCenterVector(this->MouseSensitivity, Right);
         }
         if (direction == PITCH_DOWN) {
-            Pitch -= SENSITIVITY;
-            // this->updateCenterVector(-SENSITIVITY, glm::vec3(1.0f, 0.0f, 0.0f));
-            this->updateCenterVector(-SENSITIVITY, Right);
+            Pitch -= this->MouseSensitivity;
+            this->updateCenterVector(-this->MouseSensitivity, Right);
         }
         if (direction == YAW_RIGHT) {
-            Yaw += SENSITIVITY;
-            // this->updateCenterVector(SENSITIVITY, glm::vec3(0.0f, 1.0f, 0.0f));
-            this->updateCenterVector(SENSITIVITY, Up);
+            Yaw += this->MouseSensitivity;
+            this->updateCenterVector(this->MouseSensitivity, Up);
         }
         if (direction == YAW_LEFT) {
-            Yaw -= SENSITIVITY;
-            // this->updateCenterVector(-SENSITIVITY, glm::vec3(0.0f, 1.0f, 0.0f));
-            this->updateCenterVector(-SENSITIVITY, Up);
+            Yaw -= this->MouseSensitivity;
+            this->updateCenterVector(-this->MouseSensitivity, Up);
+        }
+        if (direction == ROLL_RIGHT) {
+            Yaw += this->MouseSensitivity;
+            this->updateCenterVectorForRoll(this->MouseSensitivity, Front);
+        }
+        if (direction == ROLL_LEFT) {
+            Yaw -= this->MouseSensitivity;
+            this->updateCenterVectorForRoll(-this->MouseSensitivity, Front);
         }
 
         // this->updateFrontVector();
         this->updateCameraVectors();
     }
-
-    // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    // void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true) {
-    //     xoffset *= MouseSensitivity;
-    //     yoffset *= MouseSensitivity;
-
-    //     Yaw += xoffset;
-    //     Pitch += yoffset;
-
-    //     // make sure that when pitch is out of bounds, screen doesn't get flipped
-    //     if (constrainPitch) {
-    //         if (Pitch > 89.0f)
-    //             Pitch = 89.0f;
-    //         if (Pitch < -89.0f)
-    //             Pitch = -89.0f;
-    //     }
-
-    //     // update Front, Right and Up Vectors using the updated Euler angles
-    //     this->updateCenterVector();
-    //     this->updateCameraVectors();
-    // }
 
     // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
     void ProcessMouseScroll(float yoffset) {
@@ -218,6 +209,14 @@ class Camera {
         return this->Zoom;
     }
 
+    void updateCameraSpeed(float speed) {
+        this->MovementSpeed = speed;
+    }
+
+    void updateCameraSensitivity(float sensitivity) {
+        this->MouseSensitivity = sensitivity;
+    }
+
    private:
     void updateFrontVector() {
         this->Front = this->Center - this->Position;
@@ -227,40 +226,30 @@ class Camera {
     }
 
     void updateCenterVector(float offsetAngle, glm::vec3 axis) {
-        /*
-			type = 0 => YAW
-			type = 1 => PITCH
-		*/
-        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), offsetAngle, axis);
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(offsetAngle), axis);
         Front = glm::vec3(rotation * glm::vec4(Front, 1.0));
-        // glm::vec3 front;
-        // front.x = this->distanceFromCenter * (cos(glm::radians(Yaw)) * cos(glm::radians(Pitch)));
-        // front.y = this->distanceFromCenter * (sin(glm::radians(Pitch)));
-        // front.z = this->distanceFromCenter * (sin(glm::radians(Yaw)) * cos(glm::radians(Pitch)));
-        // Front = glm::normalize(front);
-        // Front = front;
 
         this->Center = this->Position + this->Front;
         this->distanceFromCenter = glm::distance(this->Front, this->Center);
     }
 
+    void updateCenterVectorForRoll(float offsetAngle, glm::vec3 axis) {
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(offsetAngle), axis);
+        Right = glm::vec3(rotation * glm::vec4(Right, 1.0));
+        Up = glm::normalize(glm::cross(Right, Front));
+    }
+
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors() {
-        // calculate the new Front vector
-        // glm::vec3 front;
-        // front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-        // front.y = sin(glm::radians(Pitch));
-        // front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-        // Front = glm::normalize(front);
         // also re-calculate the Right and Up vector
         Right = glm::normalize(glm::cross(Front, Up));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
         Up = glm::normalize(glm::cross(Right, Front));
 
-        // if (this->State == NON_PINNED) {
-        //     this->viewMatrix = glm::lookAt(Position, Position + Front, Up);
-        // } else if (this->State == PINNED) {
-        this->viewMatrix = glm::lookAt(Position, Center, Up);
-        // }
+        if (this->State == NON_PINNED) {
+            this->viewMatrix = glm::lookAt(Position, Position + Front, Up);
+        } else if (this->State == PINNED) {
+            this->viewMatrix = glm::lookAt(Position, Center, Up);
+        }
     }
 };
 

@@ -87,6 +87,17 @@ class Renderer {
         }
     }
 
+    void setMVPMatrices(const Model& model, const Camera& camera, const Shader& shader) {
+        int MLocation = glGetUniformLocation(shader.ID, "model");
+        glUniformMatrix4fv(MLocation, 1, GL_FALSE, glm::value_ptr(model.modelMatrix));
+
+        int VLocation = glGetUniformLocation(shader.ID, "view");
+        glUniformMatrix4fv(VLocation, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+
+        int PLocation = glGetUniformLocation(shader.ID, "projection");
+        glUniformMatrix4fv(PLocation, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
+    }
+
     void updateProjectionMatrix(float fieldOfVision) {
         this->perpectiveProperties.fieldOfVision = fieldOfVision;
         this->projectionMatrix = glm::perspective(
