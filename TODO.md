@@ -25,3 +25,10 @@
 - [x] Change `Camera` class 
 	- [x] Yaw and Pitch to {I,J,K,L} controls
 	- [x] Add arrow keys for pan pinned to Camera Center
+
+- Face Camera towards YZ Plane
+- Make table, chair, etc for scene
+- Make 1-2 scenes
+- README
+- HTML Output
+- Doxygen (copy from DAA assignment)

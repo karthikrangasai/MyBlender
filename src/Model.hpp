@@ -141,6 +141,17 @@ class Model {
         }
     }
 
+    void reset() {
+        for (int i = 0; i < 3; ++i) {
+            _translation[i] = _rotation[i] = 0.0f;
+            _scale[i] = 1.0f;
+        }
+
+        this->updateTransforms();
+        visibility = true;
+        control = false;
+    }
+
    private:
     void updateModelMatrix() {
         this->modelMatrix = glm::translate(glm::mat4(1.0f), this->translation);
@@ -163,7 +174,8 @@ class Model {
         numMeshes = scene->mNumMeshes;
         this->meshes.reserve(numMeshes);
 
-        glm::mat4 blenderToOpenGL = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        // glm::mat4 blenderToOpenGL = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::mat4 blenderToOpenGL(1.0f);
 
         for (std::uint32_t i = 0u; i < scene->mNumMeshes; ++i) {
             aiMesh* mesh = scene->mMeshes[i];

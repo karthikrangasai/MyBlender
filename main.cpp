@@ -7,17 +7,42 @@
 #include "vendor/GLFW/glfw3.h"
 
 #include <iostream>
+#include <fstream>
 
 #include "src/Model.hpp"
 #include "src/Camera.hpp"
 #include "src/Shader.hpp"
 #include "src/Renderer.hpp"
 
+// class Scene {
+//    public:
+//     unsigned int numModels;
+//     Camera camera;
+//     vector<Model> models;
+//     Scene(unsigned int numModels, Camera& camera, vector<Model>& models) {
+//         this->numModels = numModels;
+//         this->camera = camera;
+//         this->models = models;
+//     }
+
+//     void save() {
+//         fstream f;
+//         f.open("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/scenes.txt", ios::app);
+//         f.write((char*)&numModels, sizeof(unsigned int));
+//         f.write((char*)&camera, sizeof(camera));
+//         for (unsigned int i = 0; i < this->numModels; ++i) {
+//             f.write((char*)&models[i], sizeof(models[i]));
+//         }
+//         f.close();
+//     }
+// };
+
 void logString(const std::string& s);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+// void openScenes(vector<Scene>& scenes);
 
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
@@ -72,8 +97,17 @@ int main() {
     models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/cube.obj"));
     models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/sphere.obj"));
     models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/teapot.obj"));
+    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/pyramid.obj"));
+
+    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/table_2.obj"));
+    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/chair.obj"));
+
+    // std::cout << "Scene file has " << models[3].meshes.size() << " meshes" << std::endl;
     Shader shader = Shader();
     Renderer renderer = Renderer(PerpectiveProperties(SCR_WIDTH, SCR_HEIGHT));
+
+    // vector<Scene> scenes;
+    // openScenes(scenes);
 
     // ImGui Setup
     IMGUI_CHECKVERSION();
@@ -106,12 +140,6 @@ int main() {
                 char v[] = "Model 10 Visibility";
                 snprintf(v, (5 + 1 + 2 + 1 + 10 + 1), "Model %d Visibility", (i + 1));
                 ImGui::Checkbox(v, &(models[i].visibility));
-
-                // ImGui::SameLine();
-
-                // char c[] = "Model 10 Control";
-                // snprintf(c, (5 + 1 + 2 + 1 + 7 + 1), "Model %d Control", (i + 1));
-                // ImGui::Checkbox(c, &(models[i].control));
             }
 
             ImGui::Separator();
@@ -128,30 +156,21 @@ int main() {
 
             ImGui::Separator();
 
-            if (ImGui::BeginChild("Obj Properties Child", ImVec2(0, 100), true)) {
-                // static float translation[] = {0.0f, 0.0f, 0.0f};
-                // static float rotation[] = {0.0f, 0.0f, 0.0f};
-                // static float scale[] = {1.0f, 1.0f, 1.0f};
-
-                // for (unsigned int i = 0; i < models.size(); ++i) {
-                //     models[i].updateGlobalTransforms(translation, rotation, scale);
-                // }
-
+            {
+                ImGui::BeginChild("Obj Properties Child", ImVec2(0, 100), true);
                 ImGui::Text("Object Transfromation Properties");
                 ImGui::SliderFloat3("Translation", models[modelNumber]._translation, -30.0f, 30.0f);
                 ImGui::SliderFloat3("Rotation", models[modelNumber]._rotation, 0.0f, 360.0f);
                 ImGui::SliderFloat3("Scale", models[modelNumber]._scale, 1.0f, 10.0f);
 
-                // for (unsigned int i = 0; i < models.size(); ++i) {
-                //     models[i].updateTransforms(translation, rotation, scale);
-                // }
                 ImGui::EndChild();
                 models[modelNumber].updateTransforms();
             }
 
             ImGui::Separator();
 
-            if (ImGui::BeginChild("Camera Properties Child", ImVec2(0, 100), true)) {
+            {
+                ImGui::BeginChild("Camera Properties Child", ImVec2(0, 100), true);
                 ImGui::Text("Camera Properties");
                 static float speed = 2.5f;
                 static float sensitivity = 0.05f;
@@ -161,6 +180,27 @@ int main() {
                 camera.updateCameraSensitivity(sensitivity);
                 ImGui::EndChild();
             }
+
+            ImGui::Separator();
+
+            if (ImGui::Button("Reset Camera")) {
+                for (unsigned int i = 0; i < models.size(); ++i) {
+                    models[i].reset();
+                }
+                camera.reset();
+            }
+
+            // if (ImGui::Button("Take Snapshot")) {
+            //     fstream f;
+            //     f.open("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/scenes.txt", ios::app);
+            //     unsigned int numModels = models.size();
+            //     f.write((char*)&numModels, sizeof(unsigned int));
+            //     f.write((char*)&camera, sizeof(camera));
+            //     for (unsigned int i = 0; i < numModels; ++i) {
+            //         f.write((char*)&models[i], sizeof(models[i]));
+            //     }
+            //     f.close();
+            // }
 
             ImGui::Separator();
 
@@ -295,3 +335,23 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 void logString(const std::string& s) {
     std::cout << s << std::endl;
 }
+
+// void openScenes(vector<Scene>& scenes) {
+//     ifstream f;
+//     f.open("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/scenes.txt");
+
+//     unsigned int numModels = 0;
+//     Camera camera;
+//     vector<Model> models(numModels);
+//     while (!f.eof()) {
+//         f.read((char*)&numModels, sizeof(unsigned int));
+//         f.read((char*)&camera, sizeof(Camera));
+
+//         if (numModels > 0) {
+//             for (unsigned int i = 0; i < numModels; ++i) {
+//                 f.read((char*)&models[i], sizeof(Model));
+//             }
+//         }
+//     }
+//     scenes.push_back(Scene(numModels, camera, models));
+// }

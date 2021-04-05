@@ -89,7 +89,7 @@ class Camera {
 
     // constructor with vectors
     Camera() : Origin(0.0f, 0.0f, 0.0f) {
-        this->Position = glm::vec3(7.0f, 7.0f, 7.0f);
+        this->Position = glm::vec3(7.0f, 3.0f, 0.0f);
         this->WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         this->Up = glm::vec3(0.0f, 1.0f, 0.0f);
         this->Center = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -215,6 +215,25 @@ class Camera {
 
     void updateCameraSensitivity(float sensitivity) {
         this->MouseSensitivity = sensitivity;
+    }
+
+    void reset() {
+        this->Position = glm::vec3(7.0f, 3.0f, 0.0f);
+        this->WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        this->Up = glm::vec3(0.0f, 1.0f, 0.0f);
+        this->Center = glm::vec3(0.0f, 0.0f, 0.0f);
+
+        this->Front = this->Center - this->Position;
+        this->distanceFromCenter = glm::distance(this->Position, this->Center);                                            // r = sqrt(x^2 + y^2 + z^2)
+        this->Yaw = glm::atan(this->Front.z, this->Front.x);                                                               // atan(z/x)
+        this->Pitch = glm::atan(this->Front.y, glm::sqrt(glm::pow(this->Front.x, 2.0f) + glm::pow(this->Front.z, 2.0f)));  // atan(y / sqrt(x^2 + z^2))
+
+        this->MovementSpeed = SPEED;
+        this->MouseSensitivity = SENSITIVITY;
+        this->Zoom = ZOOM;
+
+        this->State = NON_PINNED;
+        updateCameraVectors();
     }
 
    private:

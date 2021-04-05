@@ -1,0 +1,186 @@
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Document</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+			}
+
+			.nav-style {
+				width: 50%;
+				margin: 0 auto;
+				text-align: center;
+			}
+
+			.section {
+				display: flex;
+				flex-direction: column;
+				width: 98%;
+				text-align: center;
+				border: 3px solid black;
+				margin: 5px auto;
+			}
+
+			.sub-section {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-evenly;
+				width: 95%;
+				text-align: center;
+				border: 3px solid black;
+				margin: 5px auto;
+			}
+
+			.diagram-div {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-evenly;
+				margin: 10px 0;
+			}
+
+			.diagram-div-img {
+				display: flex;
+				width: 40%;
+				justify-content: center;
+				height: 400px;
+			}
+
+			.diagram-div-text {
+				text-align: center;
+				display: flex;
+				flex-direction: column;
+				width: 60%;
+				border: 1px black solid;
+			}
+
+			ul {
+				list-style-type: none;
+			}
+
+			ul>li {
+				margin: 15px 0;
+				font-size: 30px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<nav class="nav-style">
+			<h1>IS F311 - Computer Graphics - Assignment 2</h1>
+			<h2>G Sathyaram - 2017B2A71335H</h2>
+			<h2>Sivaraman Karthik Rangasai - 2017B4A71499H</h2>
+			<h2>R Sai Rajaji - 2017B4A70550H</h2>
+		</nav>
+		<div class="section">
+			<div style="text-align: center;margin: 5px 0;">
+				<h1>Different Scenes</h1>
+			</div>
+			<div class="sub-section">
+				<div class="diagram-div-img"><img src="./scene1.png"></div>
+				<div class="diagram-div-text">
+					<div>
+						<h1>Scene 1 - Living Room</h1>
+					</div>
+					<div>
+						<h3>Objects are:</h3>
+						<ul>
+							<li>Table</li>
+							<li>Chair</li>
+							<li>Utah's Teapot</li>
+							<li>Cube</li>
+							<li>Sphere</li>
+							<li>Pyramid</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="sub-section">
+				<div class="diagram-div-img"><img src="./scene2.png"></div>
+				<div class="diagram-div-text">
+					<div>
+						<h1>Scene 2 - Tea Pouring, Living Room</h1>
+					</div>
+					<div>
+						<h3>Objects are:</h3>
+						<ul>
+							<li>Table</li>
+							<li>Chair</li>
+							<li>Utah's Teapot</li>
+							<li>Cube</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="sub-section">
+				<div class="diagram-div-img"><img src="./scene3.png"></div>
+				<div class="diagram-div-text">
+					<div>
+						<h1>Scene 3 - Cartoon Tower</h1>
+					</div>
+					<div>
+						<h3>Objects are:</h3>
+						<ul>
+							<li>Pyramid</li>
+							<li>Sphere</li>
+							<li>Cube</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="sub-section">
+				<div class="diagram-div-img"><img src="./scene4.png"></div>
+				<div class="diagram-div-text">
+					<div>
+						<h1>Scene 4 - Sunset and House</h1>
+					</div>
+					<div>
+						<h3>Objects are:</h3>
+						<ul>
+							<li>Pyramid</li>
+							<li>Sphere</li>
+							<li>Cube</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="sub-section">
+				<div class="diagram-div-img"><img src="./scene5.png"></div>
+				<div class="diagram-div-text">
+					<div>
+						<h1>Scene 5 - Sunset, Toyhouse, and Table</h1>
+					</div>
+					<div>
+						<h3>Objects are:</h3>
+						<ul>
+							<li>Pyramid</li>
+							<li>Sphere</li>
+							<li>Cube</li>
+							<li>Table</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="section">
+			<div>
+				<h1>Issues in Coding</h1>
+			</div>
+			<div>
+				<ul>
+					<li>- Generating a unique shader for loading all models.</li>
+					<li>- Implementing different functions for various Camera Movements, especially rotate about center
+						of camera view.</li>
+					<li>- Keeping affine transforms of each object unique with its own properties.</li>
+					<li>- Adding GUI to control the Objects in the Scene.</li>
+				</ul>
+			</div>
+		</div>
+	</body>
+
+</html>
