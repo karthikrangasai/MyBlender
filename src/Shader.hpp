@@ -1,3 +1,10 @@
+/** @file Shader.cpp
+ *  @brief Class definition for a Shader.
+ *
+ *  @author Sivaraman Karthik Rangasai (karthikrangasai)
+ *  @author G Sathyaram (wreck-count)
+ */
+
 #ifndef SHADER_H
 #define SHADER_H
 
@@ -13,17 +20,27 @@
 extern "C" {
 #endif
 
+/** @class Shader
+ *  @brief Defines a shader for diaplying models with color.
+ *  @details Compiles and generates a static shader that is used throughout the application. This shader can only display the diffuse color of the material.
+ */
 class Shader {
    public:
+    //! @brief The ID stored in the memory which used to invoke this shader.
     unsigned int ID;
+
+    /**
+	 * @brief Default Constructor.
+	*/
     Shader() {
         unsigned int vertex, fragment;
-        // vertex shader
+        // Vertex Shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &_vertexShaderSource, NULL);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
-        // fragment Shader
+
+        // Fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &_fragmentShaderSource, NULL);
         glCompileShader(fragment);
@@ -41,11 +58,6 @@ class Shader {
         glDeleteShader(fragment);
     }
 
-    // void setMVPMatrices(const glm::mat4& model) const {
-    //     int modelLocation = glGetUniformLocation(this->ID, "model");
-    //     glUniformMatrix4fv(modelLocation, 1, GL_FALSE, &model[0][0]);
-    // }
-
     void setMVPMatrices(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection) const {
         int modelLocation = glGetUniformLocation(this->ID, "model");
         glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
@@ -56,27 +68,13 @@ class Shader {
     }
 
    private:
-    // const char* _vertexShaderSource =
-    //     "#version 460 core\n"
-    //     "layout (location = 0) in vec3 aPos;\n"
-    //     "layout (location = 1) in vec4 aColor;\n"
-    //     "out vec4 color;\n"
-    //     "void main () {\n"
-    //     "\tgl_Position = vec4(aPos, 1.0f);\n"
-    //     "\tcolor = aColor;\n"
-    //     "}\n\0";
-
     const char* _vertexShaderSource =
         "#version 460 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "layout (location = 1) in vec4 aColor;\n"
         "out vec4 color;\n"
-        // "uniform mat4 model;\n"
-        // "uniform mat4 view;\n"
-        // "uniform mat4 projection;\n"
         "uniform mat4 MVP;\n"
         "void main () {\n"
-        // "\tgl_Position = projection * view * model * vec4(aPos, 1.0f);\n"
         "\tgl_Position = MVP * vec4(aPos, 1.0f);\n"
         "\tcolor = aColor;\n"
         "}\n\0";

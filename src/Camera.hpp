@@ -1,3 +1,10 @@
+/** @file Camera.cpp
+ *  @brief Class definition for Camera.
+ *
+ *  @author Sivaraman Karthik Rangasai (karthikrangasai)
+ *  @author G Sathyaram (wreck-count)
+ */
+
 #ifndef CAMERA_H
 #define CAMERA_H
 
@@ -28,10 +35,6 @@ extern "C" {
  * 	- x = cos(yaw) * cos(pitch)
  * 	- y = sin(pitch)
  * 	- z = sin(yaw) * cos(pitch)
- * 
- * 	Starting position for Camera:
- * 	- Position: (5,5,5)
- * 	- Front: ()
 */
 
 enum Camera_Movement {
@@ -58,36 +61,73 @@ enum Camera_Movement_State {
     PINNED
 };
 
-// Default camera values
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
 const float SPEED = 2.5f;
 const float SENSITIVITY = 0.05f;
-const float ZOOM = 45.0f;
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
+/** @class Camera
+ *  @brief Data class for a Camera object.
+ *  @details This class containes all the properties for a given Camera. 
+ *  This class also handles the functionality of the View Matrix used 
+ *  during the display of the objects in the scene. Camera transformations 
+ *  in the world space is also possible via this class.
+ */
 class Camera {
    public:
-    // camera Attributes
-    glm::vec3 Position;  // Camera Position in the world.
-    glm::vec3 Front;     // Camera Direction to point wrt to camera centre on a unit sphere.
-    glm::vec3 Up;        // Camera Up to define the camera axis.
-    glm::vec3 Right;     // Camera Right to define the camera axis.
-    glm::vec3 WorldUp;   // Y-axis of the world.
-    glm::vec3 Center;    // Where the Camera should `lookAt` in the world. Computed as Center = Position + Front
-    glm::vec3 Origin;    // World origin
-    glm::mat4 viewMatrix;
-    float distanceFromCenter;
-    Camera_Movement_State State;
-    // euler Angles
-    float Yaw;
-    float Pitch;
-    // camera options
-    float MovementSpeed;
-    float MouseSensitivity;
-    float Zoom;
+    //! @brief Camera Position in the world.
+    glm::vec3 Position;
 
-    // constructor with vectors
+    //! @brief Camera Direction to point wrt to camera centre on a unit sphere.
+    glm::vec3 Front;
+
+    //! @brief Camera Up to define the camera axis.
+    glm::vec3 Up;
+
+    //! @brief Camera Right to define the camera axis.
+    glm::vec3 Right;
+
+    //! @brief Y-axis of the world.
+    glm::vec3 WorldUp;
+
+    //! @brief Where the Camera should `lookAt` in the world. Computed as Center = Position + Front
+    glm::vec3 Center;
+
+    //! @brief World origin = (0,0,0)
+    glm::vec3 Origin;
+
+    //! @brief View matrix as defined and required for the display of model in the scene by the MVP method.
+    glm::mat4 viewMatrix;
+
+    //! @brief To keep the Yaw, Pitch actions constant during all time, the distance from the camera view center is computed and used to scale the front vector.
+    float distanceFromCenter;
+
+    //! @brief For pinned and non pinned movement.
+    Camera_Movement_State State;
+
+    //! @brief Camera's Yaw angle.
+    float Yaw;
+
+    //! @brief Camera's Pitch angle.
+    float Pitch;
+
+    //! @brief Camera's Roll angle.
+    float Roll;
+
+    //! @brief Camera's movement speed for translation controls.
+    float MovementSpeed;
+
+    //! @brief Camera's movement speed for angualar controls.
+    float MouseSensitivity;
+
+    /**
+	 * @brief Default Constructor.
+	 * @details The constructor initializes the camera at a certain location and the camera center is initalized to World Origin.
+	 * Hence the camera points to the World Origin. The front vector is calculated accordingly using the Center and Position of the Camera.
+	 * Camera's Up vector is initialzed with World Up which is initialized to Y-axis.
+	 * The camers starts in the NON_PINNED state.
+	*/
     Camera() : Origin(0.0f, 0.0f, 0.0f) {
         this->Position = glm::vec3(7.0f, 3.0f, 0.0f);
         this->WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -98,22 +138,41 @@ class Camera {
         this->distanceFromCenter = glm::distance(this->Position, this->Center);                                            // r = sqrt(x^2 + y^2 + z^2)
         this->Yaw = glm::atan(this->Front.z, this->Front.x);                                                               // atan(z/x)
         this->Pitch = glm::atan(this->Front.y, glm::sqrt(glm::pow(this->Front.x, 2.0f) + glm::pow(this->Front.z, 2.0f)));  // atan(y / sqrt(x^2 + z^2))
+        this->Roll = 0.0f;
 
         this->MovementSpeed = SPEED;
         this->MouseSensitivity = SENSITIVITY;
-        this->Zoom = ZOOM;
+        // this->Zoom = ZOOM;
 
         this->State = NON_PINNED;
         updateCameraVectors();
     }
 
-    // returns the view matrix calculated using Euler Angles and the LookAt Matrix
-    glm::mat4 GetViewMatrix() const {
+    /** @brief getViewMatrix - Returns the view matrix.
+ 	 * @details Returns the view matrix calculated using Camera's Euler Angles and the lookAt Matrix.
+ 	 *
+ 	 * @return A 4x4 3D Transformation matrix.
+ 	*/
+    glm::mat4 getViewMatrix() const {
         return this->viewMatrix;
     }
 
-    // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    void ProcessKeyboard(Camera_Movement direction, float deltaTime) {
+    /** @brief processKeyboard - Transform camera based on keyboard input.
+     * @details The camera controls are mentioned below:
+	 * W,S : Zoom In and Zoom Out
+	 * A,D : Move Left and Move Right
+	 * Q,Z : Move Up and Move Down
+	 * 
+	 * LEFT, RIGHT : Rotate about Center of view from left and right respectively
+	 * UP, DOWN : Rotate about Center of view from up and down respectively
+	 * 
+	 * I,K : Pitch Up and Down
+	 * J,L : Yaw left and right
+	 * O,U : Roll right and left respectively.
+     * 
+	 * @return void
+    */
+    void processKeyboard(Camera_Movement direction, float deltaTime) {
         float velocity = MovementSpeed * deltaTime;
         if (direction == FORWARD) {
             Position += Front * velocity;
@@ -184,39 +243,36 @@ class Camera {
             this->updateCenterVector(-this->MouseSensitivity, Up);
         }
         if (direction == ROLL_RIGHT) {
-            Yaw += this->MouseSensitivity;
+            Roll += this->MouseSensitivity;
             this->updateCenterVectorForRoll(this->MouseSensitivity, Front);
         }
         if (direction == ROLL_LEFT) {
-            Yaw -= this->MouseSensitivity;
+            Roll -= this->MouseSensitivity;
             this->updateCenterVectorForRoll(-this->MouseSensitivity, Front);
         }
 
-        // this->updateFrontVector();
         this->updateCameraVectors();
     }
 
-    // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-    void ProcessMouseScroll(float yoffset) {
-        Zoom -= (float)yoffset;
-        if (Zoom < 1.0f)
-            Zoom = 1.0f;
-        if (Zoom > 45.0f)
-            Zoom = 45.0f;
-    }
-
-    float getZoom() {
-        return this->Zoom;
-    }
-
+    /** @brief updateCameraSpeed - Updates the Camera Speed based on GUI input.
+     * @return void
+    */
     void updateCameraSpeed(float speed) {
         this->MovementSpeed = speed;
     }
 
+    /** @brief updateCameraSensitivity - Updates the Camera Euler Angle update Sensitivity based on GUI input.
+     * @return void
+    */
     void updateCameraSensitivity(float sensitivity) {
         this->MouseSensitivity = sensitivity;
     }
 
+    /** @brief reset - Reset all the Model properties.
+     * @details Resets all the properties of the camera i.e. code in the constructor again.
+     * 
+     * @return void
+    */
     void reset() {
         this->Position = glm::vec3(7.0f, 3.0f, 0.0f);
         this->WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -230,7 +286,6 @@ class Camera {
 
         this->MovementSpeed = SPEED;
         this->MouseSensitivity = SENSITIVITY;
-        this->Zoom = ZOOM;
 
         this->State = NON_PINNED;
         updateCameraVectors();
@@ -258,7 +313,6 @@ class Camera {
         Up = glm::normalize(glm::cross(Right, Front));
     }
 
-    // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors() {
         // also re-calculate the Right and Up vector
         Right = glm::normalize(glm::cross(Front, Up));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.

@@ -2,7 +2,6 @@
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
 
-// #include <glad/glad.h>
 #include <GL/glew.h>
 #include "vendor/GLFW/glfw3.h"
 
@@ -14,35 +13,9 @@
 #include "src/Shader.hpp"
 #include "src/Renderer.hpp"
 
-// class Scene {
-//    public:
-//     unsigned int numModels;
-//     Camera camera;
-//     vector<Model> models;
-//     Scene(unsigned int numModels, Camera& camera, vector<Model>& models) {
-//         this->numModels = numModels;
-//         this->camera = camera;
-//         this->models = models;
-//     }
-
-//     void save() {
-//         fstream f;
-//         f.open("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/scenes.txt", ios::app);
-//         f.write((char*)&numModels, sizeof(unsigned int));
-//         f.write((char*)&camera, sizeof(camera));
-//         for (unsigned int i = 0; i < this->numModels; ++i) {
-//             f.write((char*)&models[i], sizeof(models[i]));
-//         }
-//         f.close();
-//     }
-// };
-
 void logString(const std::string& s);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-// void openScenes(vector<Scene>& scenes);
 
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
@@ -79,13 +52,9 @@ int main() {
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);  // Enable vsync
-                          // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-                          // glfwSetCursorPosCallback(window, mouse_callback);
-                          // glfwSetScrollCallback(window, scroll_callback);
 
     GLenum err = glewInit();
     if (err != GLEW_OK) {
-        // Problem: glewInit failed, something is seriously wrong.
         cout << "glewInit failed: " << glewGetErrorString(err) << endl;
         exit(1);
     }
@@ -102,12 +71,8 @@ int main() {
     models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/table_2.obj"));
     models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/chair.obj"));
 
-    // std::cout << "Scene file has " << models[3].meshes.size() << " meshes" << std::endl;
     Shader shader = Shader();
     Renderer renderer = Renderer(PerpectiveProperties(SCR_WIDTH, SCR_HEIGHT));
-
-    // vector<Scene> scenes;
-    // openScenes(scenes);
 
     // ImGui Setup
     IMGUI_CHECKVERSION();
@@ -190,18 +155,6 @@ int main() {
                 camera.reset();
             }
 
-            // if (ImGui::Button("Take Snapshot")) {
-            //     fstream f;
-            //     f.open("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/scenes.txt", ios::app);
-            //     unsigned int numModels = models.size();
-            //     f.write((char*)&numModels, sizeof(unsigned int));
-            //     f.write((char*)&camera, sizeof(camera));
-            //     for (unsigned int i = 0; i < numModels; ++i) {
-            //         f.write((char*)&models[i], sizeof(models[i]));
-            //     }
-            //     f.close();
-            // }
-
             ImGui::Separator();
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -235,97 +188,61 @@ int main() {
     return 0;
 }
 
-/*
-	W,S : Zoom In and Zoom Out
-	A,D : Move Left and Move Right
-	Q,Z : Move Up and Move Down
-
-	LEFT, RIGHT : Rotate about Center of view from left and right respectively
-	UP, DOWN : Rotate about Center of view from up and down respectively
-
-	I,K : Pitch Up and Down
-	J,L : Yaw left and right
-	O,U : Roll right and left respectively.
-*/
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
 
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::PINNED_LEFT, deltaTime);
+        camera.processKeyboard(Camera_Movement::PINNED_LEFT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::PINNED_RIGHT, deltaTime);
+        camera.processKeyboard(Camera_Movement::PINNED_RIGHT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::PINNED_UP, deltaTime);
+        camera.processKeyboard(Camera_Movement::PINNED_UP, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::PINNED_DOWN, deltaTime);
+        camera.processKeyboard(Camera_Movement::PINNED_DOWN, deltaTime);
     }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::FORWARD, deltaTime);
+        camera.processKeyboard(Camera_Movement::FORWARD, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::BACKWARD, deltaTime);
+        camera.processKeyboard(Camera_Movement::BACKWARD, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::LEFT, deltaTime);
+        camera.processKeyboard(Camera_Movement::LEFT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::RIGHT, deltaTime);
+        camera.processKeyboard(Camera_Movement::RIGHT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::UP, deltaTime);
+        camera.processKeyboard(Camera_Movement::UP, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::DOWN, deltaTime);
+        camera.processKeyboard(Camera_Movement::DOWN, deltaTime);
     }
 
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::PITCH_UP, deltaTime);
+        camera.processKeyboard(Camera_Movement::PITCH_UP, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::PITCH_DOWN, deltaTime);
+        camera.processKeyboard(Camera_Movement::PITCH_DOWN, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::YAW_RIGHT, deltaTime);
+        camera.processKeyboard(Camera_Movement::YAW_RIGHT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::YAW_LEFT, deltaTime);
+        camera.processKeyboard(Camera_Movement::YAW_LEFT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::ROLL_RIGHT, deltaTime);
+        camera.processKeyboard(Camera_Movement::ROLL_RIGHT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
-        camera.ProcessKeyboard(Camera_Movement::ROLL_LEFT, deltaTime);
+        camera.processKeyboard(Camera_Movement::ROLL_LEFT, deltaTime);
     }
-}
-
-// void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-//     if (firstMouse) {
-//         lastX = xpos;
-//         lastY = ypos;
-//         firstMouse = false;
-//     }
-
-//     float xoffset = xpos - lastX;
-//     float yoffset = lastY - ypos;  // reversed since y-coordinates go from bottom to top
-//     lastX = xpos;
-//     lastY = ypos;
-
-//     camera.ProcessMouseMovement(xoffset, yoffset);
-// }
-
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    camera.ProcessMouseScroll(yoffset);
-    // fov -= (float)yoffset;
-    // if (fov < 1.0f)
-    //     fov = 1.0f;
-    // if (fov > 45.0f)
-    //     fov = 45.0f;
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -335,23 +252,3 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 void logString(const std::string& s) {
     std::cout << s << std::endl;
 }
-
-// void openScenes(vector<Scene>& scenes) {
-//     ifstream f;
-//     f.open("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/scenes.txt");
-
-//     unsigned int numModels = 0;
-//     Camera camera;
-//     vector<Model> models(numModels);
-//     while (!f.eof()) {
-//         f.read((char*)&numModels, sizeof(unsigned int));
-//         f.read((char*)&camera, sizeof(Camera));
-
-//         if (numModels > 0) {
-//             for (unsigned int i = 0; i < numModels; ++i) {
-//                 f.read((char*)&models[i], sizeof(Model));
-//             }
-//         }
-//     }
-//     scenes.push_back(Scene(numModels, camera, models));
-// }

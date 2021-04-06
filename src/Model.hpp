@@ -1,5 +1,12 @@
-#ifndef MESH_H
-#define MESH_H
+/** @file Model.cpp
+ *  @brief Class definition for a Model.
+ *
+ *  @author Sivaraman Karthik Rangasai (karthikrangasai)
+ *  @author G Sathyaram (wreck-count)
+ */
+
+#ifndef MODEL_H
+#define MODEL_H
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -9,29 +16,38 @@
 #include <glm/glm/gtc/matrix_transform.hpp>
 #include <vector>
 
-// #include "Shader.hpp"
-
 using namespace std;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * @brief Structure to control the properties of the Perspective Matrix.
+*/
 typedef struct Vertex {
+    //! @brief Position a vertex in the world coordinates.
     glm::vec3 position;
+
+    //! @brief Color a vertex.
     glm::vec4 color;
-    // Vertex(glm::vec3 position, glm::vec4 color) {
-    //     this->position = position;
-    //     this->color = color;
-    // }
 } Vertex;
 
+/** @class Mesh
+ *  @brief Data class for a Mesh object.
+ *  @details This class that stores all the vertices of a mesh and the index strcuture of the faces and also created the VAO, VBO, and EBO for the Mesh.
+ */
 class Mesh {
    public:
-    // mesh data
+    //! @brief List of all vertices of the current Mesh.
     std::vector<Vertex> vertices;
+
+    //! @brief List of all indices of the current Mesh's vertices. (Read as triples, since we deal with Triangulated Polygons.)
     std::vector<unsigned int> indices;
 
+    /**
+	 * @brief Default Constructor.
+	*/
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) {
         this->vertices = vertices;
         this->indices = indices;
@@ -39,16 +55,13 @@ class Mesh {
         setupMesh();
     }
 
+    /** @brief getVertexArrayObjectPointer - Return the VAO index in memory for the current Mesh.
+ 	*
+ 	* @return unsigned int - The VAO index.
+ 	*/
     unsigned int getVertexArrayObjectPointer() const {
         return this->VAO;
     }
-    // void Draw(Shader& shader, const glm::mat4& modelMatrix) {
-    //     glUseProgram(shader.ID);
-    //     // shader.setMVPMatrices();
-    //     glBindVertexArray(VAO);
-    //     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-    //     glBindVertexArray(0);
-    // }
 
    private:
     unsigned int VAO, VBO, EBO;
@@ -76,18 +89,44 @@ class Mesh {
     }
 };
 
+/** @class Model
+ *  @brief Data class for a Model object.
+ *  @details This class stores all the Meshes for a given Model. 
+ *  This class also handles the functionality of the Model Matrix used 
+ *  during the display of the objects in the scene. Model transformations 
+ *  in the world space is also possible via this class.
+ */
 class Model {
    public:
-    bool visibility, control;
+    //! @brief Defines the visibility of the object in the screen.
+    bool visibility;
+    //! @brief Defines the whether object's transforms can be changed.
+    bool control;
+    //! @brief List of all the meshes for the model.
     std::vector<Mesh> meshes;
+    //! @brief Number of meshes for the model.
     std::uint32_t numMeshes;
+    //! @brief Translation vector (tx,ty,tz) used in the Transformation operation's matrix.
     glm::vec3 translation;
+    //! @brief Rotation vector (rx,ry,rz) used in the Transformation operation's matrix.
     glm::vec3 rotation;
+    //! @brief Scaling vector (sx,sy,sz) used in the Transformation operation's matrix.
     glm::vec3 scale;
+    //! @brief The Model matrix that transforms the object in the world coordinate space.
     glm::mat4 modelMatrix;
 
-    float _translation[3], _rotation[3], _scale[3];
+    //! @brief The 3-tuple to store the updates values of translation from the GUI.
+    float _translation[3];
+    //! @brief The 3-tuple to store the updates values of rotation from the GUI.
+    float _rotation[3];
+    //! @brief The 3-tuple to store the updates values of scale from the GUI.
+    float _scale[3];
 
+    /**
+	 * @brief Default Constructor.
+	 * 
+	 * @param path Absolute path to the location of the model's Wavefront Object file in the OS.
+	*/
     Model(std::string const& path) {
         loadmodel(path);
 
@@ -104,32 +143,17 @@ class Model {
         control = false;
     }
 
-    // draws the model, and thus all its meshes
-    // void Draw(Shader& shader, const glm::mat4& modelMatrix) {
-    //     for (unsigned int i = 0; i < numMeshes; i++)
-    //         this->meshes[i].Draw(shader, modelMatrix);
-    // }
-
+    /** @brief updateTransforms - Transform the object properties.
+ 	* @details Applies the translation, rotation, and scaling transformations to the current model as updated in the GUI.
+	* 
+ 	* @return void
+ 	*/
     void updateTransforms() {
         this->translation = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
         this->rotation = glm::vec3(this->_rotation[0], this->_rotation[1], this->_rotation[2]);
         this->scale = glm::vec3(this->_scale[0], this->_scale[1], this->_scale[2]);
         this->updateModelMatrix();
     }
-
-    // void updateTransforms(const float* translation, const float* rotation, const float* scale) {
-    //     if (this->control) {
-    //         for (int i = 0; i < 3; ++i) {
-    //             _translation[i] = translation[i];
-    //             _rotation[i] = rotation[i];
-    //             _scale[i] = scale[i];
-    //         }
-    //         this->translation = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
-    //         this->rotation = glm::vec3(this->_rotation[0], this->_rotation[1], this->_rotation[2]);
-    //         this->scale = glm::vec3(this->_scale[0], this->_scale[1], this->_scale[2]);
-    //         this->updateModelMatrix();
-    //     }
-    // }
 
     void updateGlobalTransforms(float* translation, float* rotation, float* scale) {
         if (this->control) {
@@ -141,6 +165,12 @@ class Model {
         }
     }
 
+    /** @brief reset - Reset all the Model properties.
+ 	* @details Resets all the model properties i.e. translation and rotation 0 scaling to 1.
+	* Updates the Model Matrix to Identity Matrix and sets visibility to true, control to false (to avoid accidental value changes).
+	* 
+ 	* @return void
+ 	*/
     void reset() {
         for (int i = 0; i < 3; ++i) {
             _translation[i] = _rotation[i] = 0.0f;
@@ -170,7 +200,6 @@ class Model {
             return;
         }
 
-        // Load the Model
         numMeshes = scene->mNumMeshes;
         this->meshes.reserve(numMeshes);
 
@@ -194,7 +223,6 @@ class Model {
                 vector.x = mesh->mVertices[j].x;
                 vector.y = mesh->mVertices[j].y;
                 vector.z = mesh->mVertices[j].z;
-                // vertex.position = vector;
 
                 glm::vec4 transformed = blenderToOpenGL * glm::vec4(vector, 1.0);
                 vertex.position = glm::vec3(transformed.x, transformed.y, transformed.z);
@@ -202,7 +230,6 @@ class Model {
                 vertex.color = glm::vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a);
 
                 vertices.push_back(vertex);
-                // vertices.push_back(Vertex(vector, glm::vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a)));
             }
 
             std::vector<std::uint32_t> indices;
