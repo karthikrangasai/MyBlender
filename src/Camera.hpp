@@ -157,6 +157,10 @@ class Camera {
         return this->viewMatrix;
     }
 
+    glm::vec3 getPosition() const {
+        return this->Position;
+    }
+
     /** @brief processKeyboard - Transform camera based on keyboard input.
      * @details The camera controls are mentioned below:
 	 * W,S : Zoom In and Zoom Out

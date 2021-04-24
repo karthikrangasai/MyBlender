@@ -16,6 +16,8 @@
 #include <glm/glm/gtc/matrix_transform.hpp>
 #include <vector>
 
+#include "Material.hpp"
+
 using namespace std;
 
 #ifdef __cplusplus
@@ -29,8 +31,8 @@ typedef struct Vertex {
     //! @brief Position a vertex in the world coordinates.
     glm::vec3 position;
 
-    //! @brief Color a vertex.
-    glm::vec4 color;
+    //! @brief Normals of the current vertex
+    glm::vec3 normal;
 } Vertex;
 
 /** @class Mesh
@@ -45,10 +47,13 @@ class Mesh {
     //! @brief List of all indices of the current Mesh's vertices. (Read as triples, since we deal with Triangulated Polygons.)
     std::vector<unsigned int> indices;
 
+    //! @brief Material of the object.
+    Material material;
+
     /**
 	 * @brief Default Constructor.
 	*/
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) {
+    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, Material material) : material(material) {
         this->vertices = vertices;
         this->indices = indices;
 
@@ -84,7 +89,7 @@ class Mesh {
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
         // vertex colors
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
         glBindVertexArray(0);
     }
 };
@@ -98,20 +103,24 @@ class Mesh {
  */
 class Model {
    public:
-    //! @brief Defines the visibility of the object in the screen.
+    //! @brief Defines whether object is visible on the screen.
     bool visibility;
+
     //! @brief Defines the whether object's transforms can be changed.
     bool control;
+
     //! @brief List of all the meshes for the model.
     std::vector<Mesh> meshes;
     //! @brief Number of meshes for the model.
     std::uint32_t numMeshes;
+
     //! @brief Translation vector (tx,ty,tz) used in the Transformation operation's matrix.
     glm::vec3 translation;
     //! @brief Rotation vector (rx,ry,rz) used in the Transformation operation's matrix.
     glm::vec3 rotation;
     //! @brief Scaling vector (sx,sy,sz) used in the Transformation operation's matrix.
     glm::vec3 scale;
+
     //! @brief The Model matrix that transforms the object in the world coordinate space.
     glm::mat4 modelMatrix;
 
@@ -182,6 +191,10 @@ class Model {
         control = false;
     }
 
+    const glm::mat4& getModelMatrix() const {
+        return this->modelMatrix;
+    }
+
    private:
     void updateModelMatrix() {
         this->modelMatrix = glm::translate(glm::mat4(1.0f), this->translation);
@@ -190,6 +203,7 @@ class Model {
         this->modelMatrix = glm::rotate(this->modelMatrix, glm::radians(this->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         this->modelMatrix = glm::scale(this->modelMatrix, this->scale);
     }
+
     void loadmodel(const std::string path) {
         Assimp::Importer importer;
 
@@ -211,23 +225,45 @@ class Model {
 
             // Extract Material for this Mesh
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+            aiColor4D ambientColor;
+            aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambientColor);
+
             aiColor4D diffuseColor;
             aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuseColor);
+
+            aiColor4D specularColor;
+            aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specularColor);
+
+            float shininess;
+            aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
+
+            Material meshMaterial = Material(
+                glm::vec4(ambientColor.r, ambientColor.g, ambientColor.b, ambientColor.a),
+                glm::vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a),
+                glm::vec4(specularColor.r, specularColor.g, specularColor.b, shininess),
+                shininess);
 
             std::vector<Vertex> vertices;
             vertices.reserve(mesh->mNumVertices);
 
             for (std::uint32_t j = 0; j < mesh->mNumVertices; ++j) {
                 Vertex vertex;
-                glm::vec3 vector;
-                vector.x = mesh->mVertices[j].x;
-                vector.y = mesh->mVertices[j].y;
-                vector.z = mesh->mVertices[j].z;
+                glm::vec3 posVector;
+                posVector.x = mesh->mVertices[j].x;
+                posVector.y = mesh->mVertices[j].y;
+                posVector.z = mesh->mVertices[j].z;
 
-                glm::vec4 transformed = blenderToOpenGL * glm::vec4(vector, 1.0);
+                glm::vec3 normalVector;
+                normalVector.x = mesh->mNormals[j].x;
+                normalVector.y = mesh->mNormals[j].y;
+                normalVector.z = mesh->mNormals[j].z;
+
+                glm::vec4 transformed = blenderToOpenGL * glm::vec4(posVector, 1.0);
                 vertex.position = glm::vec3(transformed.x, transformed.y, transformed.z);
 
-                vertex.color = glm::vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a);
+                transformed = blenderToOpenGL * glm::vec4(normalVector, 1.0);
+                vertex.normal = glm::vec3(transformed.x, transformed.y, transformed.z);
 
                 vertices.push_back(vertex);
             }
@@ -239,7 +275,7 @@ class Model {
                 indices.push_back(mesh->mFaces[k].mIndices[1u]);
                 indices.push_back(mesh->mFaces[k].mIndices[2u]);
             }
-            this->meshes.push_back(Mesh(vertices, indices));
+            this->meshes.push_back(Mesh(vertices, indices, meshMaterial));
         }
     }
 };

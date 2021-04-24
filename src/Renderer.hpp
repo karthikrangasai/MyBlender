@@ -18,6 +18,7 @@
 
 #include "Camera.hpp"
 #include "Shader.hpp"
+#include "Scene.hpp"
 #include "Model.hpp"
 
 using namespace std;
@@ -79,13 +80,22 @@ class Renderer {
     //! @brief The projection matrix of the current MVP triple.
     glm::mat4 projectionMatrix;
 
-    //! @brief The product of Model, View, Projection matrices.
-    glm::mat4 MVPMatrix;
+    //! @brief The camera used to view the current scene.
+    Camera camera;
+
+    //! @brief The global shader defined for the application.
+    Shader shader;
+
+    //! @brief The current scene to be rendered.
+    Scene scene;
 
     Renderer(ProjectionType projectionType, PerpectiveProperties perpectiveProperties, glm::mat4 projectionMatrix, glm::mat4 MVPMatrix) : perpectiveProperties{perpectiveProperties} {
         this->projectionType = projectionType;
         this->projectionMatrix = projectionMatrix;
-        this->MVPMatrix = MVPMatrix;
+
+        this->camera = Camera();
+        this->shader = Shader();
+        this->scene = Scene();
     }
 
     Renderer(const PerpectiveProperties& perpectiveProperties) : perpectiveProperties{perpectiveProperties} {
@@ -95,7 +105,10 @@ class Renderer {
             (perpectiveProperties.screenWidth / perpectiveProperties.screenHeight),
             perpectiveProperties.nearDistance,
             perpectiveProperties.farDistance);
-        this->MVPMatrix = glm::mat4(1.0f);
+
+        this->camera = Camera();
+        this->shader = Shader();
+        this->scene = Scene();
     }
 
     /** @brief render - Render a scene.
@@ -107,29 +120,47 @@ class Renderer {
      * 
      * @return void
     */
-    void render(const Model& model, const Camera& camera, const Shader& shader) {
-        glm::mat4 viewMatrix = camera.getViewMatrix();
-        this->MVPMatrix = this->projectionMatrix * viewMatrix * model.modelMatrix;
-        int MVPLocation = glGetUniformLocation(shader.ID, "MVP");
-        glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, glm::value_ptr(this->MVPMatrix));
-        for (unsigned int i = 0; i < model.numMeshes; ++i) {
-            unsigned int meshVAO = model.meshes[i].getVertexArrayObjectPointer();
+    void renderAll() {
+        this->updateLighting();
+        this->updateVPMatrices();
+        this->updateCameraPosition();
 
-            glBindVertexArray(meshVAO);
-            glDrawElements(GL_TRIANGLES, model.meshes[i].indices.size(), GL_UNSIGNED_INT, 0);
-            glBindVertexArray(0);
+        for (const Model& model : this->scene.models) {
+            if (model.visibility) {
+                this->renderModel(model);
+            }
         }
     }
 
-    void setMVPMatrices(const Model& model, const Camera& camera, const Shader& shader) {
-        int MLocation = glGetUniformLocation(shader.ID, "model");
-        glUniformMatrix4fv(MLocation, 1, GL_FALSE, glm::value_ptr(model.modelMatrix));
+    void updateLighting() const {
+        const Light light = this->scene.light;
+        this->shader.setLighting(light.getLightPosition(), light.getLightAmbient(), light.getLightDiffuse(), light.getLightSpecular());
+    }
 
-        int VLocation = glGetUniformLocation(shader.ID, "view");
-        glUniformMatrix4fv(VLocation, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
+    void updateVPMatrices() const {
+        this->shader.setViewMatrix(camera.getViewMatrix());
+        this->shader.setProjectionMatrix(this->projectionMatrix);
+    }
 
-        int PLocation = glGetUniformLocation(shader.ID, "projection");
-        glUniformMatrix4fv(PLocation, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
+    void updateCameraPosition() const {
+        this->shader.setCameraPosition(camera.getPosition());
+    }
+
+    void renderModel(const Model& model) const {
+        this->shader.setModelMatrix(model.getModelMatrix());
+        for (unsigned int i = 0; i < model.numMeshes; ++i) {
+            Mesh mesh = model.meshes[i];
+            this->shader.setMaterial(
+                mesh.material.getMaterialAmbient(),
+                mesh.material.getMaterialDiffuse(),
+                mesh.material.getMaterialSpecular(),
+                mesh.material.getMaterialShininess());
+
+            unsigned int meshVAO = mesh.getVertexArrayObjectPointer();
+            glBindVertexArray(meshVAO);
+            glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+            glBindVertexArray(0);
+        }
     }
 
     /** @brief updateProjectionMatrix - Update Feild of Vision of the Perspective Projection.

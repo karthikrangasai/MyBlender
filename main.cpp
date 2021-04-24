@@ -3,7 +3,7 @@
 #include "vendor/imgui/imgui_impl_opengl3.h"
 
 #include <GL/glew.h>
-#include "vendor/GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
 
 #include <iostream>
 #include <fstream>
@@ -15,7 +15,7 @@
 
 void logString(const std::string& s);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
+void processInput(GLFWwindow* window, Camera& camera);
 
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
@@ -28,7 +28,6 @@ float fov = 45.0f;
 float deltaTime = 0.0f;  // time between current frame and last frame
 float lastFrame = 0.0f;
 
-Camera camera = Camera();
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
@@ -43,7 +42,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "MoonShot", NULL, NULL);
     if (window == NULL) {
         std::cout << "Window creation failed" << std::endl;
         glfwTerminate();
@@ -61,17 +60,6 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
-    vector<Model> models;
-    // models.reserve(2);
-    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/cube.obj"));
-    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/sphere.obj"));
-    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/teapot.obj"));
-    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/pyramid.obj"));
-
-    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/table_2.obj"));
-    models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/chair.obj"));
-
-    Shader shader = Shader();
     Renderer renderer = Renderer(PerpectiveProperties(SCR_WIDTH, SCR_HEIGHT));
 
     // ImGui Setup
@@ -85,7 +73,7 @@ int main() {
 
     ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    glUseProgram(shader.ID);
+    glUseProgram(renderer.shader.ID);
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -94,27 +82,37 @@ int main() {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        processInput(window);
+        processInput(window, renderer.camera);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
         if (ImGui::Begin("Settings")) {
-            for (unsigned int i = 0; i < models.size(); ++i) {
+            {
+                ImGui::BeginChild("Light Properties", ImVec2(0, 150), true);
+                ImGui::SliderFloat3("Position", renderer.scene.light._position, -60.0f, 60.0f);
+                // ImGui::ColorPicker3("Ambient Color", renderer.scene.light._ambient, 0);
+                // ImGui::ColorPicker3("Diffuse Color", renderer.scene.light._diffuse, 0);
+                // ImGui::ColorPicker3("Specular Color", renderer.scene.light._specular, 0);
+                ImGui::EndChild();
+                renderer.scene.light.updateLighting();
+            }
+
+            for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
                 char v[] = "Model 10 Visibility";
                 snprintf(v, (5 + 1 + 2 + 1 + 10 + 1), "Model %d Visibility", (i + 1));
-                ImGui::Checkbox(v, &(models[i].visibility));
+                ImGui::Checkbox(v, &(renderer.scene.models[i].visibility));
             }
 
             ImGui::Separator();
 
             static int modelNumber = 0;
-            for (unsigned int i = 0; i < models.size(); ++i) {
+            for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
                 char v[] = "Model 10";
                 snprintf(v, (5 + 1 + 2), "Model %d", (i + 1));
                 ImGui::RadioButton(v, &modelNumber, i);
-                if ((i + 1) != models.size()) {
+                if ((i + 1) != renderer.scene.models.size()) {
                     ImGui::SameLine();
                 }
             }
@@ -124,12 +122,12 @@ int main() {
             {
                 ImGui::BeginChild("Obj Properties Child", ImVec2(0, 100), true);
                 ImGui::Text("Object Transfromation Properties");
-                ImGui::SliderFloat3("Translation", models[modelNumber]._translation, -30.0f, 30.0f);
-                ImGui::SliderFloat3("Rotation", models[modelNumber]._rotation, 0.0f, 360.0f);
-                ImGui::SliderFloat3("Scale", models[modelNumber]._scale, 1.0f, 10.0f);
+                ImGui::SliderFloat3("Translation", renderer.scene.models[modelNumber]._translation, -30.0f, 30.0f);
+                ImGui::SliderFloat3("Rotation", renderer.scene.models[modelNumber]._rotation, 0.0f, 360.0f);
+                ImGui::SliderFloat3("Scale", renderer.scene.models[modelNumber]._scale, 1.0f, 10.0f);
 
                 ImGui::EndChild();
-                models[modelNumber].updateTransforms();
+                renderer.scene.models[modelNumber].updateTransforms();
             }
 
             ImGui::Separator();
@@ -141,18 +139,18 @@ int main() {
                 static float sensitivity = 0.05f;
                 ImGui::SliderFloat("Camera Speed", &speed, 1.0f, 5.0f);
                 ImGui::SliderFloat("Camera Sensitivity", &sensitivity, 0.01f, 5.0f);
-                camera.updateCameraSpeed(speed);
-                camera.updateCameraSensitivity(sensitivity);
+                renderer.camera.updateCameraSpeed(speed);
+                renderer.camera.updateCameraSensitivity(sensitivity);
                 ImGui::EndChild();
             }
 
             ImGui::Separator();
 
             if (ImGui::Button("Reset Camera")) {
-                for (unsigned int i = 0; i < models.size(); ++i) {
-                    models[i].reset();
+                for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
+                    renderer.scene.models[i].reset();
                 }
-                camera.reset();
+                renderer.camera.reset();
             }
 
             ImGui::Separator();
@@ -161,13 +159,7 @@ int main() {
             ImGui::End();
         }
 
-        /* RENDER CALL */
-        for (const Model& m : models) {
-            if (m.visibility) {
-                renderer.render(m, camera, shader);
-            }
-        }
-
+        renderer.renderAll();
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -188,7 +180,7 @@ int main() {
     return 0;
 }
 
-void processInput(GLFWwindow* window) {
+void processInput(GLFWwindow* window, Camera& camera) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
