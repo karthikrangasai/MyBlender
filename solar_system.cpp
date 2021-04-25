@@ -12,6 +12,7 @@
 #include "src/Camera.hpp"
 #include "src/Shader.hpp"
 #include "src/Renderer.hpp"
+#include "src/Physics.hpp"
 
 void logString(const std::string& s);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -38,7 +39,7 @@ int main() {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
-    // const char* glsl_version = "#version 130";
+    const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -61,90 +62,69 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     Renderer renderer = Renderer(PerpectiveProperties(SCR_WIDTH, SCR_HEIGHT));
-    Scene* scene = renderer.getScene();
-    CollisionPhysx physx = CollisionPhysx();
-    scene->attachPhysics(&physx);
+    Scene* universe = renderer.getScene();
+    SolarSystemPhysx ssp = SolarSystemPhysx();
+    // SETUP SCENE //
+    Sphere sun = Sphere(5, 30);
+    sun.meshes[0].material.setDiffuseColor(glm::vec3(0.937f, 0.557f, 0.22f));
+    PhysxObject sunPhysics = PhysxObject(PhysxShape::SPHERE, &sun, 100, glm::vec3(0.0f));
 
-    Plane groundPlane = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
-    groundPlane._translation[1] = -5.0f;
-    groundPlane._scale[0] = groundPlane._scale[1] = groundPlane._scale[2] = 5.0f;
-    groundPlane.updateTransforms();
-    groundPlane.Odist = 0.0f;
-    groundPlane.meshes[0].material.setDiffuseColor(glm::vec3(0, 0, 1.0f));
+    Sphere mercury = Sphere(1, 20);
+    mercury._translation[0] = 5;
+    mercury.updateTransforms();
+    mercury.meshes[0].material.setDiffuseColor(glm::vec3(1.0f, 0.898f, 0.706f));
+    PhysxObject mercuryPhysics = PhysxObject(PhysxShape::SPHERE, &mercury, 8, glm::vec3(0, glm::sqrt(100 / 5), 0));
 
-    Plane wallOne = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
-    wallOne._translation[2] = -25.0f;
-    wallOne._translation[1] = 12.0f;
-    wallOne._scale[0] = wallOne._scale[1] = wallOne._scale[2] = 5.0f;
-    wallOne._rotation[0] = 90.0f;
-    wallOne.updateTransforms();
-    wallOne.Odist = -25.0f;
-    wallOne.meshes[0].material.setDiffuseColor(glm::vec3(0, 0, 1.0f));
+    Sphere venus = Sphere(2, 20);
+    venus._translation[0] = 15;
+    venus.updateTransforms();
+    venus.meshes[0].material.setDiffuseColor(glm::vec3(1.0f, 0.0f, 0.0f));
+    PhysxObject venusPhysics = PhysxObject(PhysxShape::SPHERE, &venus, 12, glm::vec3(0, 0, glm::sqrt(100 / 15)));
 
-    Plane wallTwo = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
-    wallTwo._translation[0] = -25.0f;
-    wallTwo._translation[1] = 12.0f;
-    wallTwo._scale[0] = wallTwo._scale[1] = wallTwo._scale[2] = 5.0f;
-    wallTwo._rotation[2] = 90.0f;
-    wallTwo.updateTransforms();
-    wallTwo.Odist = -25.0f;
-    wallTwo.meshes[0].material.setDiffuseColor(glm::vec3(0, 0, 1.0f));
+    Sphere earth = Sphere(2, 20);
+    earth._translation[0] = 25;
+    earth.updateTransforms();
+    earth.meshes[0].material.setDiffuseColor(glm::vec3(0.0f, 0.9f, 0.9f));
+    PhysxObject earthPhysics = PhysxObject(PhysxShape::SPHERE, &earth, 16, glm::vec3(0, glm::sqrt(100 / 25), 0));
 
-    Plane wallThree = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
-    wallThree._translation[0] = 25.0f;
-    wallThree._translation[1] = 12.0f;
-    wallThree._scale[0] = wallThree._scale[1] = wallThree._scale[2] = 5.0f;
-    wallThree._rotation[2] = -90.0f;
-    wallThree.updateTransforms();
-    wallThree.Odist = 25.0f;
-    wallThree.meshes[0].material.setDiffuseColor(glm::vec3(0, 0, 1.0f));
+    Sphere mars = Sphere(1.5, 20);
+    mars._translation[0] = 30;
+    mars.updateTransforms();
+    mars.meshes[0].material.setDiffuseColor(glm::vec3(0.5765f, 0.2824f, 0.2196f));
+    PhysxObject marsPhysics = PhysxObject(PhysxShape::SPHERE, &mars, 6, glm::vec3(0, 0, glm::sqrt(100 / 30)));
 
-    Sphere s1 = Sphere(1, 30);
-    s1._translation[1] = 15.0f;
-    s1.updateTransforms();
-    s1.meshes[0].material.setDiffuseColor(glm::vec3(1.0f, 0, 0));
-    // Sphere s2 = Sphere(2, 30);
-    // s2._translation[0] = -20.0f;
-    // s2.updateTransforms();
+    universe->addModel(&sun);
+    universe->addModel(&mercury);
+    universe->addModel(&venus);
+    universe->addModel(&earth);
+    universe->addModel(&mars);
 
-    scene->addModel(&groundPlane);
-    scene->addModel(&wallOne);
-    scene->addModel(&wallTwo);
-    scene->addModel(&wallThree);
-    scene->addModel(&s1);
-    // scene->addModel(&s2);
+    ssp.addObject(&sunPhysics);
+    ssp.addObject(&mercuryPhysics);
+    ssp.addObject(&venusPhysics);
+    ssp.addObject(&earthPhysics);
+    ssp.addObject(&marsPhysics);
 
-    PhysxObject gPlane = PhysxObject(PhysxShape::PLANE, &groundPlane, 2.0f, glm::vec3(0, 0, 0));
-    PhysxObject gWallOne = PhysxObject(PhysxShape::PLANE, &wallOne, 2.0f, glm::vec3(0, 0, 0));
-    PhysxObject gwallTwo = PhysxObject(PhysxShape::PLANE, &wallTwo, 2.0f, glm::vec3(0, 0, 0));
-    PhysxObject gwallThree = PhysxObject(PhysxShape::PLANE, &wallThree, 2.0f, glm::vec3(0, 0, 0));
-    PhysxObject ps1 = PhysxObject(PhysxShape::SPHERE, &s1, 1.0f, glm::vec3(-1, 0, 0));
-    ps1.enableGravity();
-    // PhysxObject ps2 = PhysxObject(PhysxShape::SPHERE, &s2, 2, glm::vec3(20, 0, 0));
+    universe->attachPhysics(&ssp);
+    universe->isPhysicsOn = true;
 
-    physx.addObject(&gPlane);
-    physx.addObject(&gWallOne);
-    physx.addObject(&gwallTwo);
-    physx.addObject(&gwallThree);
-    physx.addObject(&ps1);
-    // physx.addObject(&ps2);
-    scene->isPhysicsOn = true;
-
-    // // ImGui Setup
-    // IMGUI_CHECKVERSION();
-    // ImGui::CreateContext();
-    // ImGuiIO& io = ImGui::GetIO();
-    // (void)io;
-    // ImGui::StyleColorsDark();
-    // ImGui_ImplGlfw_InitForOpenGL(window, true);
-    // ImGui_ImplOpenGL3_Init(glsl_version);
+    // ImGui Setup
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
     ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    int count = 0;
 
     glUseProgram(renderer.shader.ID);
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         float currentFrame = glfwGetTime();
@@ -158,49 +138,6 @@ int main() {
 
         // if (ImGui::Begin("Settings")) {
         //     {
-        //         ImGui::BeginChild("Light Properties", ImVec2(0, 150), true);
-        //         ImGui::SliderFloat3("Position", renderer.scene.light._position, -60.0f, 60.0f);
-        //         // ImGui::ColorPicker3("Ambient Color", renderer.scene.light._ambient, 0);
-        //         // ImGui::ColorPicker3("Diffuse Color", renderer.scene.light._diffuse, 0);
-        //         // ImGui::ColorPicker3("Specular Color", renderer.scene.light._specular, 0);
-        //         ImGui::EndChild();
-        //         renderer.scene.light.updateLighting();
-        //     }
-
-        //     for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
-        //         char v[] = "Model 10 Visibility";
-        //         snprintf(v, (5 + 1 + 2 + 1 + 10 + 1), "Model %d Visibility", (i + 1));
-        //         ImGui::Checkbox(v, &(renderer.scene.models[i].visibility));
-        //     }
-
-        //     ImGui::Separator();
-
-        //     static int modelNumber = 0;
-        //     for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
-        //         char v[] = "Model 10";
-        //         snprintf(v, (5 + 1 + 2), "Model %d", (i + 1));
-        //         ImGui::RadioButton(v, &modelNumber, i);
-        //         if ((i + 1) != renderer.scene.models.size()) {
-        //             ImGui::SameLine();
-        //         }
-        //     }
-
-        //     ImGui::Separator();
-
-        //     {
-        //         ImGui::BeginChild("Obj Properties Child", ImVec2(0, 100), true);
-        //         ImGui::Text("Object Transfromation Properties");
-        //         ImGui::SliderFloat3("Translation", renderer.scene.models[modelNumber]._translation, -30.0f, 30.0f);
-        //         ImGui::SliderFloat3("Rotation", renderer.scene.models[modelNumber]._rotation, 0.0f, 360.0f);
-        //         ImGui::SliderFloat3("Scale", renderer.scene.models[modelNumber]._scale, 1.0f, 10.0f);
-
-        //         ImGui::EndChild();
-        //         renderer.scene.models[modelNumber].updateTransforms();
-        //     }
-
-        //     ImGui::Separator();
-
-        //     {
         //         ImGui::BeginChild("Camera Properties Child", ImVec2(0, 100), true);
         //         ImGui::Text("Camera Properties");
         //         static float speed = 2.5f;
@@ -211,16 +148,6 @@ int main() {
         //         renderer.camera.updateCameraSensitivity(sensitivity);
         //         ImGui::EndChild();
         //     }
-
-        //     ImGui::Separator();
-
-        //     if (ImGui::Button("Reset Camera")) {
-        //         for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
-        //             renderer.scene.models[i].reset();
-        //         }
-        //         renderer.camera.reset();
-        //     }
-
         //     ImGui::Separator();
 
         //     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -237,11 +164,15 @@ int main() {
         // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
+        ++count;
+        // if (count > 100) {
+        //     break;
+        // }
     }
 
-    // ImGui_ImplOpenGL3_Shutdown();
-    // ImGui_ImplGlfw_Shutdown();
-    // ImGui::DestroyContext();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
     glfwTerminate();

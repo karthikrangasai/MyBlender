@@ -9,6 +9,7 @@
 
 #include "Light.hpp"
 #include "Model.hpp"
+#include "Physics.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,25 +19,45 @@ class Scene {
    public:
     glm::vec3 ambientColor;
     Light light;
-    std::vector<Model> models;
+    std::vector<Model*> models;
+
+    bool isPhysicsOn;
+    Physx* physx = nullptr;
 
     Scene() {
         this->ambientColor = glm::vec3(1.0f, 1.0f, 1.0f);
         this->light = Light();
-        this->models = std::vector<Model>();
+        this->models = std::vector<Model*>();
+        this->isPhysicsOn = false;
 
-        this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/cube.obj"));
-        this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/sphere.obj"));
-        this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/teapot.obj"));
-        this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/pyramid.obj"));
-        this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/table_2.obj"));
-        this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/chair.obj"));
+        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/cube.obj"));
+        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/sphere.obj"));
+        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/teapot.obj"));
+        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/pyramid.obj"));
+        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/table_2.obj"));
+        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/chair.obj"));
+    }
+
+    void addModel(Model* model) {
+        this->models.push_back(model);
+    }
+
+    void addSphereModel() {
+        Model model = Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/sphere.obj");
+        this->models.push_back(&model);
+    }
+
+    void attachPhysics(SolarSystemPhysx* physx) {
+        this->physx = physx;
+    }
+
+    void attachPhysics(CollisionPhysx* physx) {
+        this->physx = physx;
     }
 
     // static Scene openScene() {}
 
     // void save() {}
-
    private:
 };
 

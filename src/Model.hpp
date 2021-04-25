@@ -15,6 +15,7 @@
 #include <glm/glm/glm.hpp>
 #include <glm/glm/gtc/matrix_transform.hpp>
 #include <vector>
+#include <iostream>
 
 #include "Material.hpp"
 
@@ -23,6 +24,8 @@ using namespace std;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+const double PI = 3.1415926535;
 
 /**
  * @brief Structure to control the properties of the Perspective Matrix.
@@ -114,7 +117,8 @@ class Model {
     //! @brief Number of meshes for the model.
     std::uint32_t numMeshes;
 
-    //! @brief Translation vector (tx,ty,tz) used in the Transformation operation's matrix.
+    glm::vec3 worldPosition;
+
     glm::vec3 translation;
     //! @brief Rotation vector (rx,ry,rz) used in the Transformation operation's matrix.
     glm::vec3 rotation;
@@ -144,6 +148,7 @@ class Model {
             _scale[i] = 1.0f;
         }
 
+        this->worldPosition = glm::vec3(0.0f);
         this->translation = glm::vec3(0.0f, 0.0f, 0.0f);
         this->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
         this->scale = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -158,6 +163,7 @@ class Model {
  	* @return void
  	*/
     void updateTransforms() {
+        this->worldPosition = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
         this->translation = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
         this->rotation = glm::vec3(this->_rotation[0], this->_rotation[1], this->_rotation[2]);
         this->scale = glm::vec3(this->_scale[0], this->_scale[1], this->_scale[2]);
@@ -195,7 +201,23 @@ class Model {
         return this->modelMatrix;
     }
 
-   private:
+   protected:
+    Model(Mesh mesh) {
+        this->meshes.push_back(mesh);
+        this->numMeshes = meshes.size();
+        for (int i = 0; i < 3; ++i) {
+            _translation[i] = _rotation[i] = 0.0f;
+            _scale[i] = 1.0f;
+        }
+        this->worldPosition = glm::vec3(0.0f);
+        this->translation = glm::vec3(0.0f, 0.0f, 0.0f);
+        this->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+        this->scale = glm::vec3(1.0f, 1.0f, 1.0f);
+        this->modelMatrix = glm::mat4(1.0f);
+        visibility = true;
+        control = false;
+    }
+
     void updateModelMatrix() {
         this->modelMatrix = glm::translate(glm::mat4(1.0f), this->translation);
         this->modelMatrix = glm::rotate(this->modelMatrix, glm::radians(this->rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -277,6 +299,139 @@ class Model {
             }
             this->meshes.push_back(Mesh(vertices, indices, meshMaterial));
         }
+    }
+};
+
+class Sphere : public Model {
+   public:
+    float radius;
+
+    Sphere(float radius, unsigned resolution) : Model(Sphere::generateSphere(resolution, resolution, radius)) {
+        this->radius = radius;
+    }
+
+    static Mesh generateSphere(unsigned latCount, unsigned lonCount, unsigned int radius) {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        unsigned indexCount = 6 * lonCount * (latCount - 1);
+        unsigned vertCount = (lonCount + 1) * (latCount + 1);
+
+        indices.resize(indexCount);
+        vertices.resize(vertCount);
+
+        float lonStep = (2 * PI) / lonCount;
+        float latStep = PI / latCount;
+
+        for (unsigned lat = 0, v = 0; lat <= latCount; lat++) {
+            for (unsigned lon = 0; lon <= lonCount; lon++, v++) {
+                vertices[v].normal = glm::vec3(
+                    cos(lon * lonStep) * sin(lat * latStep),
+                    cos(lat * latStep - PI),
+                    sin(lon * lonStep) * sin(lat * latStep));
+
+                vertices[v].position = glm::vec3(
+                    radius * vertices[v].normal.x,
+                    radius * vertices[v].normal.y,
+                    radius * vertices[v].normal.z);
+            }
+        }
+        unsigned i = 0;
+        unsigned v = lonCount + 1;
+        for (unsigned lon = 0; lon < lonCount; lon++, v++) {
+            indices[i++] = lon;
+            indices[i++] = v;
+            indices[i++] = v + 1;
+        }
+
+        v = lonCount + 1;
+        for (unsigned lat = 1; lat < latCount - 1; lat++, v++) {
+            for (unsigned lon = 0; lon < lonCount; lon++, v++) {
+                indices[i++] = v;
+                indices[i++] = v + lonCount + 1;
+                indices[i++] = v + 1;
+
+                indices[i++] = v + 1;
+                indices[i++] = v + lonCount + 1;
+                indices[i++] = v + lonCount + 2;
+            }
+        }
+
+        for (unsigned lon = 0; lon < lonCount; lon++, v++) {
+            indices[i++] = v;
+            indices[i++] = v + lonCount + 1;
+            indices[i++] = v + 1;
+        }
+
+        Material material;
+
+        return Mesh(vertices, indices, material);
+    }
+};
+
+class Plane : public Model {
+   public:
+    glm::vec3 normal;
+    float Odist = 0.0f;
+
+    Plane(std::string const& path) : Model(path) {
+        this->normal = glm::vec3(0.0f, 1.0f, 0.0f);
+    }
+
+    Plane(unsigned scale) : Model(Plane::generatePlane(scale)) {
+        this->normal = glm::vec3(0.0f, 1.0f, 0.0f);
+    }
+
+    void updateTransforms() {
+        this->worldPosition = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
+        this->translation = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
+        this->rotation = glm::vec3(this->_rotation[0], this->_rotation[1], this->_rotation[2]);
+        this->scale = glm::vec3(this->_scale[0], this->_scale[1], this->_scale[2]);
+
+        glm::mat4 normalRotator = glm::translate(glm::mat4(1.0f), this->translation);
+        normalRotator = glm::rotate(normalRotator, glm::radians(this->rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        normalRotator = glm::rotate(normalRotator, glm::radians(this->rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        normalRotator = glm::rotate(normalRotator, glm::radians(this->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        this->normal = glm::vec3(normalRotator * glm::vec4(this->normal, 1.0f));
+
+        this->normal = glm::normalize(this->normal);
+        // this->Odist = glm::dot(this->translation, this->translation);
+
+        this->updateModelMatrix();
+    }
+
+    static Mesh generatePlane(unsigned scale) {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        unsigned indexCount = 6;
+        unsigned vertCount = 4;
+
+        indices.resize(indexCount);
+        vertices.resize(vertCount);
+
+        vertices[0].position = glm::vec3(scale, 0, scale);
+        vertices[0].normal = glm::vec3(0, 1, 0);
+
+        vertices[1].position = glm::vec3(scale, 0, -scale);
+        vertices[1].normal = glm::vec3(0, 1, 0);
+
+        vertices[2].position = glm::vec3(-scale, 0, scale);
+        vertices[2].normal = glm::vec3(0, 1, 0);
+
+        vertices[3].position = glm::vec3(-scale, 0, -scale);
+        vertices[3].normal = glm::vec3(0, 1, 0);
+
+        // indices[0] = 3;
+        // indices[1] = 1;
+        // indices[2] = 2;
+        // indices[3] = 2;
+        // indices[4] = 1;
+        // indices[5] = 0;
+
+        Material material;
+
+        return Mesh(vertices, indices, material);
     }
 };
 

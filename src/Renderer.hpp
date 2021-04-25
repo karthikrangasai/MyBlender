@@ -56,7 +56,7 @@ typedef struct PerpectiveProperties {
     /**
 	 * @brief Default Constructor.
 	*/
-    PerpectiveProperties(float screenWidth, float screenHeight, float fieldOfVision = 45.0f, float nearDistance = 0.1f, float farDistance = 100.0f) {
+    PerpectiveProperties(float screenWidth, float screenHeight, float fieldOfVision = 45.0f, float nearDistance = 0.1f, float farDistance = 200.0f) {
         this->fieldOfVision = fieldOfVision;
         this->screenWidth = screenWidth;
         this->screenHeight = screenHeight;
@@ -125,8 +125,12 @@ class Renderer {
         this->updateVPMatrices();
         this->updateCameraPosition();
 
-        for (const Model& model : this->scene.models) {
-            if (model.visibility) {
+        if (scene.isPhysicsOn && scene.physx != nullptr) {
+            scene.physx->step(0.05f);
+        }
+
+        for (const Model* model : this->scene.models) {
+            if (model->visibility) {
                 this->renderModel(model);
             }
         }
@@ -146,10 +150,10 @@ class Renderer {
         this->shader.setCameraPosition(camera.getPosition());
     }
 
-    void renderModel(const Model& model) const {
-        this->shader.setModelMatrix(model.getModelMatrix());
-        for (unsigned int i = 0; i < model.numMeshes; ++i) {
-            Mesh mesh = model.meshes[i];
+    void renderModel(const Model* model) const {
+        this->shader.setModelMatrix(model->getModelMatrix());
+        for (unsigned int i = 0; i < model->numMeshes; ++i) {
+            Mesh mesh = model->meshes[i];
             this->shader.setMaterial(
                 mesh.material.getMaterialAmbient(),
                 mesh.material.getMaterialDiffuse(),
@@ -176,6 +180,10 @@ class Renderer {
             (perpectiveProperties.screenWidth / perpectiveProperties.screenHeight),
             perpectiveProperties.nearDistance,
             perpectiveProperties.farDistance);
+    }
+
+    Scene* getScene() {
+        return &(this->scene);
     }
 };
 

@@ -21,8 +21,8 @@ mkdir -p $BUILD_DIR
 # g++ $CXXFLAGS -c -o  $BUILD_DIR/imgui_widgets.o $IMGUI_DIR/imgui_widgets.cpp
 # echo ">> Finished compiling ImGui."
 
-g++ $CXXFLAGS -c -o $BUILD_DIR/main.o main.cpp
-echo ">> Finished compiling main."
+g++ $CXXFLAGS -c -o $BUILD_DIR/solar_system.o solar_system.cpp
+echo ">> Finished compiling solar_system."
 
-g++ $CXXFLAGS -o myBlender $BUILD_DIR/main.o $BUILD_DIR/imgui.o $BUILD_DIR/imgui_demo.o $BUILD_DIR/imgui_draw.o $BUILD_DIR/imgui_impl_glfw.o $BUILD_DIR/imgui_impl_opengl3.o $BUILD_DIR/imgui_tables.o $BUILD_DIR/imgui_widgets.o $LDLIBS
-echo ">> Finished compiling, linking, and building myBlender."
+g++ $CXXFLAGS -o mySolarSystem $BUILD_DIR/solar_system.o $BUILD_DIR/imgui.o $BUILD_DIR/imgui_demo.o $BUILD_DIR/imgui_draw.o $BUILD_DIR/imgui_impl_glfw.o $BUILD_DIR/imgui_impl_opengl3.o $BUILD_DIR/imgui_tables.o $BUILD_DIR/imgui_widgets.o $LDLIBS
+echo ">> Finished compiling, linking, and building mySolarSystem."
