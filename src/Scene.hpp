@@ -15,50 +15,56 @@
 extern "C" {
 #endif
 
+/** @class Scene
+ *  @brief Class for a Scene object.
+ */
 class Scene {
    public:
-    glm::vec3 ambientColor;
+    //! The light used in the scene
     Light light;
+    //! List of models present in the scene.
     std::vector<Model*> models;
 
+    //! Flag variable to decide whether physics simulation is rendered.
     bool isPhysicsOn;
+    //! The type of Physics Simulator to use for the current scene.
     Physx* physx = nullptr;
 
+    /**
+	 * @brief Construct a new Scene object
+	 */
     Scene() {
-        this->ambientColor = glm::vec3(1.0f, 1.0f, 1.0f);
         this->light = Light();
         this->models = std::vector<Model*>();
         this->isPhysicsOn = false;
-
-        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/cube.obj"));
-        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/sphere.obj"));
-        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/teapot.obj"));
-        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/pyramid.obj"));
-        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/table_2.obj"));
-        // this->models.push_back(Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/chair.obj"));
     }
 
+    /**
+	 * @brief Adds a Model to the scene.
+	 * 
+	 * @param model 
+	 */
     void addModel(Model* model) {
         this->models.push_back(model);
     }
 
-    void addSphereModel() {
-        Model model = Model("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/sphere.obj");
-        this->models.push_back(&model);
-    }
-
+    /**
+	 * @brief Attaches Solar System Physics Simulator to the scene.
+	 * 
+	 * @param physx 
+	 */
     void attachPhysics(SolarSystemPhysx* physx) {
         this->physx = physx;
     }
 
+    /**
+	 * @brief Attaches Collision Physics Simulator to the scene.
+	 * 
+	 * @param physx 
+	 */
     void attachPhysics(CollisionPhysx* physx) {
         this->physx = physx;
     }
-
-    // static Scene openScene() {}
-
-    // void save() {}
-   private:
 };
 
 #ifdef __cplusplus

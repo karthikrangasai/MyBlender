@@ -1,8 +1,4 @@
 {
-	"files.associations": {
-		"map": "cpp",
-		"string": "cpp"
-	},
 	"editor.formatOnSave": true,
 	"editor.tabSize": 4,
 	"editor.insertSpaces": false

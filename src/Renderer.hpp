@@ -111,15 +111,9 @@ class Renderer {
         this->scene = Scene();
     }
 
-    /** @brief render - Render a scene.
-     * @details This function renders a model thorugh a camera using the provided shader.
-     *
-     * @param model The current model to be rendered.
-     * @param camera The camera through render through. (Used to obtain the view matrix)
-     * @param shader The shader needed to be used.
-     * 
-     * @return void
-    */
+    /**
+	* @brief Render the current the frame.
+	*/
     void renderAll() {
         this->updateLighting();
         this->updateVPMatrices();
@@ -136,20 +130,34 @@ class Renderer {
         }
     }
 
+    /**
+	 * @brief Update the lights from the scenes to the shaders.
+	 */
     void updateLighting() const {
         const Light light = this->scene.light;
         this->shader.setLighting(light.getLightPosition(), light.getLightAmbient(), light.getLightDiffuse(), light.getLightSpecular());
     }
 
+    /**
+	 * @brief Update the View and Projection matrices to the shaders.
+	 */
     void updateVPMatrices() const {
         this->shader.setViewMatrix(camera.getViewMatrix());
         this->shader.setProjectionMatrix(this->projectionMatrix);
     }
 
+    /**
+	 * @brief Update the camera position to the shaders.
+	 */
     void updateCameraPosition() const {
         this->shader.setCameraPosition(camera.getPosition());
     }
 
+    /**
+	 * @brief Update the aspects of the provided model to the shaders.
+	 * 
+	 * @param model 
+	 */
     void renderModel(const Model* model) const {
         this->shader.setModelMatrix(model->getModelMatrix());
         for (unsigned int i = 0; i < model->numMeshes; ++i) {
@@ -182,6 +190,11 @@ class Renderer {
             perpectiveProperties.farDistance);
     }
 
+    /**
+	 * @brief Get the currently used Scene.
+	 * 
+	 * @return Scene* 
+	 */
     Scene* getScene() {
         return &(this->scene);
     }

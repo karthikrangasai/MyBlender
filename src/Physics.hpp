@@ -17,22 +17,49 @@
 extern "C" {
 #endif
 
+//! Constant of Accelaration of gravity
 const float g = 9.81f;
+
+//! Universal Gravitational Constant
 const double G = 6.67430e-11;
+
+//! Scaled mass of the Sun for the simulation
 const float SUN_MASS = 1.989E7;
 
+/**
+ * @enum PhysxShape
+ * @brief Shape of the Object used in the physics simulation.
+ * 
+ */
 enum PhysxShape {
     PLANE,
     SPHERE,
 };
 
+/**
+ * @struct PhysxObject
+ * @brief Physics Object of the Model used in the simulation.
+ */
 typedef struct PhysxObject {
+    //! Shape of the Model.
     PhysxShape shape;
+    //! Model from the scene used for physics simulation.
     Model* model;
+    //! Velocity of the object.
     glm::vec3 velocity;
+    //! Force being applied on the object.
     glm::vec3 force;
+    //! Mass of the object
     float mass;
 
+    /**
+	 * @brief Construct a new PhysxObject
+	 * 
+	 * @param shape 
+	 * @param model 
+	 * @param mass 
+	 * @param initVelocity 
+	 */
     PhysxObject(PhysxShape shape, Model* model, float mass, glm::vec3 initVelocity) {
         this->shape = shape;
         this->model = model;
@@ -41,24 +68,43 @@ typedef struct PhysxObject {
         this->force = this->mass * glm::vec3(0.0f);
     }
 
+    /**
+	 * @brief Enables gravity for the current object.
+	 */
     void enableGravity() {
         this->force = this->mass * glm::vec3(0, -g, 0);
     }
 } PhysxObject;
 
+/** @class Physx
+ *  @brief Handles the Physics calculations for all objects in the scene with physics enabled.
+ */
 class Physx {
    public:
+    /**
+	 * @brief Consider the Model specified through the PhysxObject for all physics calculations.
+	 * 
+	 * @param object 
+	 */
     void addObject(PhysxObject* object) {
         this->objects.push_back(object);
     }
 
+    /**
+	 * @brief Calculate all the changes governed by the physics of the system for a single time step.
+	 * 
+	 * @param dt 
+	 */
     virtual void step(float dt) = 0;
 
    protected:
+    //! List of all objects interacting in the simulation.
     std::vector<PhysxObject*> objects;
-    glm::vec3 gravity = glm::vec3(0, -9.81f, 0);
 };
 
+/** @class SolarSystemPhysx
+ *  @brief Handles the Physics for the Solar System Simulation.
+ */
 class SolarSystemPhysx : public Physx {
     virtual void step(float dt) {
         int numObjects = this->objects.size();
@@ -67,16 +113,10 @@ class SolarSystemPhysx : public Physx {
             PhysxObject* p = this->objects[i];
             p->force = glm::vec3(0);
             float gForce = p->mass * sun->mass / glm::pow(glm::distance(p->model->worldPosition, sun->model->worldPosition), 2);
-
-            // std::cout << ">>> Distance: " << glm::distance(p->model->worldPosition, sun->model->worldPosition) << endl;
             glm::vec3 gForceDirection = glm::normalize(sun->model->worldPosition - p->model->worldPosition);
             p->force += gForceDirection * gForce;
             p->model->worldPosition += p->velocity * dt;
             p->velocity += (p->force / p->mass) * dt;
-            // std::cout << ">>> Velocity: " << p->velocity.x << " " << p->velocity.y << " " << p->velocity.z << endl;
-
-            // std::cout << ">>> Position: " << p->model->worldPosition.x << " " << p->model->worldPosition.y << " " << p->model->worldPosition.z << endl;
-            // update model transforms and modelMatrix
             p->model->_translation[0] = p->model->worldPosition.x;
             p->model->_translation[1] = p->model->worldPosition.y;
             p->model->_translation[2] = p->model->worldPosition.z;
@@ -85,52 +125,9 @@ class SolarSystemPhysx : public Physx {
     }
 };
 
-/*
-	PhysxObject {
-		Model
-		Mass
-		Position
-		Velocity
-		type: PLANE or SPHERE
-	}
-
-	Dynamics {
-		How to update
-		
-		for all Physx objects {
-			v = v + (mg/m) * dt
-			x = x + v * dt
-		}
-	}
-
-	CollisionDetection {
-		Sphere v Sphere
-		Sphere v Plane
-
-		If time is there, add (GJK + EPA) Algo
-	}
-
-	CollisionResponse {
-		Solver : {
-			Impulse Solver,
-			Position Solver
-		}
-	}
-
-
-	Final Workflow:
-		while((I'm an a rendering) && (an a Physx enabled)) {
-			CollisionDetection;
-			CollisionResponse;
-			Dynamics;
-
-			then make render calls;
-		}
-	
-	Best way to show output is to make a
-		- billiards table simulation
-		- fountain of balls shooting out and colliding on ground
-*/
+/** @class CollisionPhysx
+ *  @brief Handles the Physics for the Collision Simulation.
+ */
 class CollisionPhysx : public Physx {
     virtual void step(float dt) {
         int numObjects = this->objects.size();
@@ -143,19 +140,15 @@ class CollisionPhysx : public Physx {
                         std::cout << i << " " << j << endl;
                         this->solvePlaneSphereCollision(p, q);
                     }
-                    // this->stepSphere(q, dt);
                 } else if (p->shape == SPHERE and q->shape == PLANE) {
                     if (this->testPlaneSphereCollision(q, p)) {
                         std::cout << j << " " << i << endl;
                         this->solvePlaneSphereCollision(q, p);
                     }
-                    // this->stepSphere(p, dt);
                 } else if (p->shape == SPHERE and q->shape == SPHERE) {
                     if (this->testSphereSphereCollision(p, q)) {
                         solveSphereSphereCollision(p, q);
                     }
-                    // stepSphere(p, dt);
-                    // stepSphere(q, dt);
                 }
             }
         }
@@ -165,7 +158,6 @@ class CollisionPhysx : public Physx {
             if (p->shape == PhysxShape::SPHERE) {
                 this->stepSphere(p, dt);
                 p->velocity += (p->force / p->mass) * dt;
-                // std::cout << ">>> Velocity: " << p->velocity.x << " " << p->velocity.y << " " << p->velocity.z << endl;
             }
         }
     }
@@ -173,7 +165,6 @@ class CollisionPhysx : public Physx {
     bool testPlaneSphereCollision(PhysxObject* plane, PhysxObject* sphere) {
         Plane* p = static_cast<Plane*>(plane->model);
         Sphere* s = static_cast<Sphere*>(sphere->model);
-        // glm::vec3 ncap = glm::normalize(p->normal);
         return (fabs(p->Odist + glm::dot(s->worldPosition, p->normal)) <= s->radius);
     }
 
@@ -187,7 +178,6 @@ class CollisionPhysx : public Physx {
         glm::vec3 lcap = glm::normalize(sphere->velocity);
         float dotnl = glm::dot(ncap, lcap);
         glm::vec3 rcap = 2 * dotnl * ncap - lcap;
-        // rcap*=glm::length(sphere->velocity);
         sphere->velocity = (-1.0f) * rcap * glm::length(sphere->velocity);
         return;
     }
@@ -214,9 +204,6 @@ class CollisionPhysx : public Physx {
     void stepSphere(PhysxObject* sphere, float dt) {
         Sphere* s = static_cast<Sphere*>(sphere->model);
         s->worldPosition += sphere->velocity * dt;
-
-        // std::cout << ">>> Position: " << s->worldPosition.x << " " << s->worldPosition.y << " " << s->worldPosition.z << endl;
-        // update model transforms and modelMatrix
         s->_translation[0] = s->worldPosition.x;
         s->_translation[1] = s->worldPosition.y;
         s->_translation[2] = s->worldPosition.z;

@@ -58,31 +58,54 @@ class Shader {
         glDeleteShader(fragment);
     }
 
+    /**
+	 * @brief Set the Model Matrix
+	 * 
+	 * @param model 
+	 */
     void setModelMatrix(const glm::mat4& model) const {
         int modelLocation = glGetUniformLocation(this->ID, "model");
         glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
     }
 
+    /**
+	 * @brief Set the View Matrix
+	 * 
+	 * @param view 
+	 */
     void setViewMatrix(const glm::mat4& view) const {
         int viewLocation = glGetUniformLocation(this->ID, "view");
         glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
     }
 
+    /**
+	 * @brief Set the Projection Matrix
+	 * 
+	 * @param projection 
+	 */
     void setProjectionMatrix(const glm::mat4& projection) const {
         int projectionLocation = glGetUniformLocation(this->ID, "projection");
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
     }
 
-    void setWorldAmbientLightColor(const glm::vec3& worldAmbientColor) const {
-        int worldAmbientColorLocation = glGetUniformLocation(this->ID, "worldAmbientColor");
-        glUniform3fv(worldAmbientColorLocation, 1, glm::value_ptr(worldAmbientColor));
-    }
-
+    /**
+	 * @brief Set the Camera Position
+	 * 
+	 * @param position 
+	 */
     void setCameraPosition(const glm::vec3& position) const {
         int cameraPosition = glGetUniformLocation(this->ID, "viewPos");
         glUniform3fv(cameraPosition, 1, glm::value_ptr(position));
     }
 
+    /**
+	 * @brief Set the Material
+	 * 
+	 * @param ambient 
+	 * @param diffuse 
+	 * @param specular 
+	 * @param shininess 
+	 */
     void setMaterial(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular, const float& shininess) const {
         int materialAmbient = glGetUniformLocation(this->ID, "material.ambient");
         glUniform3fv(materialAmbient, 1, glm::value_ptr(ambient));
@@ -97,6 +120,14 @@ class Shader {
         glUniform1f(materialShininess, shininess);
     }
 
+    /**
+	 * @brief Set the Lighting
+	 * 
+	 * @param position 
+	 * @param ambient 
+	 * @param diffuse 
+	 * @param specular 
+	 */
     void setLighting(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular) const {
         int lightPosition = glGetUniformLocation(this->ID, "light.position");
         glUniform3fv(lightPosition, 1, glm::value_ptr(position));

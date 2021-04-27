@@ -157,12 +157,17 @@ class Camera {
         return this->viewMatrix;
     }
 
+    /**
+	 * @brief Get the camera's position
+	 * 
+	 * @return glm::vec3 
+	 */
     glm::vec3 getPosition() const {
         return this->Position;
     }
 
     /** @brief processKeyboard - Transform camera based on keyboard input.
-     * @details The camera controls are mentioned below:
+	 * @details The camera controls are mentioned below:
 	 * W,S : Zoom In and Zoom Out
 	 * A,D : Move Left and Move Right
 	 * Q,Z : Move Up and Move Down
@@ -173,9 +178,9 @@ class Camera {
 	 * I,K : Pitch Up and Down
 	 * J,L : Yaw left and right
 	 * O,U : Roll right and left respectively.
-     * 
+	 * 
 	 * @return void
-    */
+	*/
     void processKeyboard(Camera_Movement direction, float deltaTime) {
         float velocity = MovementSpeed * deltaTime;
         if (direction == FORWARD) {
@@ -259,24 +264,24 @@ class Camera {
     }
 
     /** @brief updateCameraSpeed - Updates the Camera Speed based on GUI input.
-     * @return void
-    */
+	 * @return void
+	*/
     void updateCameraSpeed(float speed) {
         this->MovementSpeed = speed;
     }
 
     /** @brief updateCameraSensitivity - Updates the Camera Euler Angle update Sensitivity based on GUI input.
-     * @return void
-    */
+	 * @return void
+	*/
     void updateCameraSensitivity(float sensitivity) {
         this->MouseSensitivity = sensitivity;
     }
 
     /** @brief reset - Reset all the Model properties.
-     * @details Resets all the properties of the camera i.e. code in the constructor again.
-     * 
-     * @return void
-    */
+	 * @details Resets all the properties of the camera i.e. code in the constructor again.
+	 * 
+	 * @return void
+	*/
     void reset() {
         this->Position = glm::vec3(7.0f, 3.0f, 0.0f);
         this->WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);

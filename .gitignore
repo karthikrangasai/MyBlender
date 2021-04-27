@@ -1,6 +1,7 @@
 # Custom ignore files
 build/
 myBlender
+mySolarSystem
 docs/
 problem_statement/
 vendor/

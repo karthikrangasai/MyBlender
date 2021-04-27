@@ -830,10 +830,13 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = src/Camera.hpp \
+                         src/Light.hpp \
+                         src/Material.hpp \
                          src/Model.hpp \
+                         src/Physics.hpp \
                          src/Renderer.hpp \
+                         src/Scene.hpp \
                          src/Shader.hpp \
-                         main.cpp \
                          README.md
 
 # This tag can be used to specify the character encoding of the source files
@@ -975,11 +978,9 @@ EXAMPLE_RECURSIVE      = NO
 # that contain images that are to be included in the documentation (see the
 # \image command).
 
-IMAGE_PATH             = outputs/scene1.png \
-                         outputs/scene2.png \
-                         outputs/scene3.png \
-                         outputs/scene4.png \
-                         outputs/scene5.png
+IMAGE_PATH             = outputs/collision_one.png \
+                         outputs/collision_two.png \
+                         outputs/solar_system.png
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program

@@ -136,7 +136,7 @@ class Model {
     float _scale[3];
 
     /**
-	 * @brief Default Constructor.
+	 * @brief Construct a new Model object from the OBJ file specified using the path.
 	 * 
 	 * @param path Absolute path to the location of the model's Wavefront Object file in the OS.
 	*/
@@ -197,11 +197,21 @@ class Model {
         control = false;
     }
 
+    /**
+	 * @brief Get the Model Matrix of the current Model
+	 * 
+	 * @return const glm::mat4& 
+	 */
     const glm::mat4& getModelMatrix() const {
         return this->modelMatrix;
     }
 
    protected:
+    /**
+    * @brief Construct a new Model object using the mesh provided.
+    * 
+    * @param mesh 
+    */
     Model(Mesh mesh) {
         this->meshes.push_back(mesh);
         this->numMeshes = meshes.size();
@@ -218,6 +228,10 @@ class Model {
         control = false;
     }
 
+    /**
+	 * @brief Update the Model Matric based on the
+	 * transformations made to the Model in the 3D scene.
+	 */
     void updateModelMatrix() {
         this->modelMatrix = glm::translate(glm::mat4(1.0f), this->translation);
         this->modelMatrix = glm::rotate(this->modelMatrix, glm::radians(this->rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -226,6 +240,11 @@ class Model {
         this->modelMatrix = glm::scale(this->modelMatrix, this->scale);
     }
 
+    /**
+	 * @brief Read an OBJ file specified using the path to read Model data
+	 * 
+	 * @param path 
+	 */
     void loadmodel(const std::string path) {
         Assimp::Importer importer;
 
@@ -302,29 +321,47 @@ class Model {
     }
 };
 
+/** @class Sphere
+ *  @brief Class for a Sphere model inherited from Model class.
+ *  @details This class stores all the Meshes for a given Sphere.
+ */
 class Sphere : public Model {
    public:
     float radius;
 
-    Sphere(float radius, unsigned resolution) : Model(Sphere::generateSphere(resolution, resolution, radius)) {
+    /**
+	 * @brief Construct a new Sphere object
+	 * 
+	 * @param radius 
+	 * @param resolution 
+	 */
+    Sphere(float radius, unsigned resolution) : Model(Sphere::generateSphere(radius, resolution)) {
         this->radius = radius;
     }
 
-    static Mesh generateSphere(unsigned latCount, unsigned lonCount, unsigned int radius) {
+    /**
+	 * @brief Procedurally generate a sphere mesh using the resolution and radius
+	 * 
+	 * @param resolution 
+	 * @param resolution 
+	 * @param radius 
+	 * @return Mesh 
+	 */
+    static Mesh generateSphere(float radius, unsigned resolution) {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
 
-        unsigned indexCount = 6 * lonCount * (latCount - 1);
-        unsigned vertCount = (lonCount + 1) * (latCount + 1);
+        unsigned indexCount = 6 * resolution * (resolution - 1);
+        unsigned vertCount = (resolution + 1) * (resolution + 1);
 
         indices.resize(indexCount);
         vertices.resize(vertCount);
 
-        float lonStep = (2 * PI) / lonCount;
-        float latStep = PI / latCount;
+        float lonStep = (2 * PI) / resolution;
+        float latStep = PI / resolution;
 
-        for (unsigned lat = 0, v = 0; lat <= latCount; lat++) {
-            for (unsigned lon = 0; lon <= lonCount; lon++, v++) {
+        for (unsigned lat = 0, v = 0; lat <= resolution; lat++) {
+            for (unsigned lon = 0; lon <= resolution; lon++, v++) {
                 vertices[v].normal = glm::vec3(
                     cos(lon * lonStep) * sin(lat * latStep),
                     cos(lat * latStep - PI),
@@ -337,29 +374,29 @@ class Sphere : public Model {
             }
         }
         unsigned i = 0;
-        unsigned v = lonCount + 1;
-        for (unsigned lon = 0; lon < lonCount; lon++, v++) {
+        unsigned v = resolution + 1;
+        for (unsigned lon = 0; lon < resolution; lon++, v++) {
             indices[i++] = lon;
             indices[i++] = v;
             indices[i++] = v + 1;
         }
 
-        v = lonCount + 1;
-        for (unsigned lat = 1; lat < latCount - 1; lat++, v++) {
-            for (unsigned lon = 0; lon < lonCount; lon++, v++) {
+        v = resolution + 1;
+        for (unsigned lat = 1; lat < resolution - 1; lat++, v++) {
+            for (unsigned lon = 0; lon < resolution; lon++, v++) {
                 indices[i++] = v;
-                indices[i++] = v + lonCount + 1;
+                indices[i++] = v + resolution + 1;
                 indices[i++] = v + 1;
 
                 indices[i++] = v + 1;
-                indices[i++] = v + lonCount + 1;
-                indices[i++] = v + lonCount + 2;
+                indices[i++] = v + resolution + 1;
+                indices[i++] = v + resolution + 2;
             }
         }
 
-        for (unsigned lon = 0; lon < lonCount; lon++, v++) {
+        for (unsigned lon = 0; lon < resolution; lon++, v++) {
             indices[i++] = v;
-            indices[i++] = v + lonCount + 1;
+            indices[i++] = v + resolution + 1;
             indices[i++] = v + 1;
         }
 
@@ -369,19 +406,37 @@ class Sphere : public Model {
     }
 };
 
+/** @class Plane
+ *  @brief Class for a Plane model inherited from Model class.
+ *  @details This class stores all the Meshes for a given Plane.
+ */
 class Plane : public Model {
    public:
     glm::vec3 normal;
     float Odist = 0.0f;
 
+    /**
+	 * @brief Construct a new Plane object from the OBJ file specified in the path.
+	 * 
+	 * @param path 
+	 */
     Plane(std::string const& path) : Model(path) {
         this->normal = glm::vec3(0.0f, 1.0f, 0.0f);
     }
 
+    /**
+	 * @brief Construct a new Plane object
+	 * 
+	 * @param scale 
+	 */
     Plane(unsigned scale) : Model(Plane::generatePlane(scale)) {
         this->normal = glm::vec3(0.0f, 1.0f, 0.0f);
     }
 
+    /**
+	 * @brief Updates the model matrix and the normal of the
+	 * plane based on the transforms applied to the Model.
+	 */
     void updateTransforms() {
         this->worldPosition = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
         this->translation = glm::vec3(this->_translation[0], this->_translation[1], this->_translation[2]);
@@ -400,6 +455,12 @@ class Plane : public Model {
         this->updateModelMatrix();
     }
 
+    /**
+	 * @brief Procedurally generate a sphere mesh using the resolution and radius
+	 * 
+	 * @param scale 
+	 * @return Mesh 
+	 */
     static Mesh generatePlane(unsigned scale) {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
@@ -422,12 +483,12 @@ class Plane : public Model {
         vertices[3].position = glm::vec3(-scale, 0, -scale);
         vertices[3].normal = glm::vec3(0, 1, 0);
 
-        // indices[0] = 3;
-        // indices[1] = 1;
-        // indices[2] = 2;
-        // indices[3] = 2;
-        // indices[4] = 1;
-        // indices[5] = 0;
+        indices[0] = 3;
+        indices[1] = 1;
+        indices[2] = 2;
+        indices[3] = 2;
+        indices[4] = 1;
+        indices[5] = 0;
 
         Material material;
 
