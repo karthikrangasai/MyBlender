@@ -69,6 +69,8 @@ typedef struct PhysxObject {
         this->mass = mass;
         this->velocity = glm::vec3(initVelocity);
         this->force = this->mass * glm::vec3(0.0f);
+        this->gravityEnabled = false;
+        this->airResistanceEnabled = false;
     }
 
     /**
@@ -76,8 +78,6 @@ typedef struct PhysxObject {
 	 */
     void enableGravity() {
         gravityEnabled = true;
-
-        this->force = this->mass * glm::vec3(0, -g, 0);
     }
 
     /**
@@ -85,12 +85,11 @@ typedef struct PhysxObject {
 	 */
     void enableAirResistance() {
         airResistanceEnabled = true;
-        if (this->shape == PhysxShape::SPHERE) {
-            Sphere* s = static_cast<Sphere*>(this->model);
-            this->force += this->mass * (6.0f * 3.1415f * 0.1f * s->radius) * this->velocity;
-        }
     }
 
+    /**
+	 * @brief Computer all the forces acting on object in the current frame.
+	 */
     void recomputeTotalForce() {
         this->force = this->mass * glm::vec3(0.0f);
 
@@ -101,7 +100,7 @@ typedef struct PhysxObject {
         if (airResistanceEnabled) {
             if (this->shape == PhysxShape::SPHERE) {
                 Sphere* s = static_cast<Sphere*>(this->model);
-                this->force -= this->mass * (6.0f * 3.1415f * 0.0f * s->radius) * this->velocity;
+                this->force -= this->mass * (6.0f * 3.1415f * 0.007f * s->radius) * this->velocity;
             }
         }
     }
@@ -186,13 +185,23 @@ class CollisionPhysx : public Physx {
             PhysxObject* p = objects[i];
             if (p->shape == PhysxShape::SPHERE) {
                 this->stepSphere(p, dt);
-                p->recomputeTotalForce();
-                p->velocity += (p->force / p->mass) * dt;
-                this->stepSphere(p, dt);
+                if (p->gravityEnabled || p->airResistanceEnabled) {
+                    p->recomputeTotalForce();
+                    p->velocity += (p->force / p->mass) * dt;
+                    this->stepSphere(p, dt);
+                }
             }
         }
     }
 
+    /**
+	 * @brief Test Plane-Sphere Collision
+	 * 
+	 * @param plane 
+	 * @param sphere 
+	 * @return true When collision happens
+	 * @return false When no collision happens
+	 */
     bool testPlaneSphereCollision(PhysxObject* plane, PhysxObject* sphere) {
         Plane* p = static_cast<Plane*>(plane->model);
         Sphere* s = static_cast<Sphere*>(sphere->model);
@@ -205,23 +214,48 @@ class CollisionPhysx : public Physx {
         return (dist <= s->radius);
     }
 
+    /**
+	 * @brief Solver for Plane-Sphere Collision
+	 * 
+	 * @param plane 
+	 * @param sphere 
+	 */
     void solvePlaneSphereCollision(PhysxObject* plane, PhysxObject* sphere) {
         Plane* p = static_cast<Plane*>(plane->model);
         glm::vec3 ncap = p->normal;
-        glm::vec3 lcap = glm::normalize(sphere->velocity);
-        float dotnl = glm::dot(ncap, lcap);
-        glm::vec3 rcap = 2 * dotnl * ncap - lcap;
-        rcap = glm::normalize(rcap);
-        sphere->velocity = (-1.0f) * rcap * glm::length(sphere->velocity);
+        if (glm::length(sphere->velocity) > 0.0f) {
+            glm::vec3 lcap = glm::normalize(sphere->velocity);
+            float dotnl = glm::dot(ncap, lcap);
+            glm::vec3 rcap = 2 * dotnl * ncap - lcap;
+            rcap = glm::normalize(rcap);
+            sphere->velocity = (-1.0f) * rcap * glm::length(sphere->velocity);
+        }
         return;
     }
 
+    /**
+	 * @brief Test a Sphere-Sphere collision
+	 * 
+	 * @param sphereOne 
+	 * @param sphereTwo 
+	 * @return true When collision happens
+	 * @return false When no collision happens
+	 */
     bool testSphereSphereCollision(PhysxObject* sphereOne, PhysxObject* sphereTwo) {
         Sphere* sOne = static_cast<Sphere*>(sphereOne->model);
         Sphere* sTwo = static_cast<Sphere*>(sphereTwo->model);
-        return (glm::distance(sOne->worldPosition, sTwo->worldPosition) <= (sOne->radius + sTwo->radius));
+
+        bool cond1 = (glm::distance(sOne->worldPosition, sTwo->worldPosition) <= (sOne->radius + sTwo->radius));
+        bool cond2 = (glm::dot(sTwo->worldPosition - sOne->worldPosition, sphereOne->velocity) >= 0);
+        return cond1 && cond2;
     }
 
+    /**
+	 * @brief Solver for Sphere-Sphere Collision
+	 * 
+	 * @param sphereOne 
+	 * @param sphereTwo 
+	 */
     void solveSphereSphereCollision(PhysxObject* sphereOne, PhysxObject* sphereTwo) {
         Sphere* s1 = static_cast<Sphere*>(sphereOne->model);
         Sphere* s2 = static_cast<Sphere*>(sphereTwo->model);
@@ -235,6 +269,12 @@ class CollisionPhysx : public Physx {
         return;
     }
 
+    /**
+	 * @brief Step sphere when spheres Collide
+	 * 
+	 * @param sphere 
+	 * @param dt 
+	 */
     void stepSphere(PhysxObject* sphere, float dt) {
         Sphere* s = static_cast<Sphere*>(sphere->model);
         s->worldPosition += sphere->velocity * dt;

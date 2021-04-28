@@ -5,12 +5,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <iostream>
-#include <fstream>
-
-#include "src/Model.hpp"
-#include "src/Camera.hpp"
-#include "src/Shader.hpp"
 #include "src/Renderer.hpp"
 
 void logString(const std::string& s);
@@ -32,12 +26,10 @@ static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
 const float PLANE_SCALE = 10.0f;
 const float BOUNDING_BOX_DIST = 50.0f;
 const float VALUE_DOWN_SCALER = 2.0f;
-const int NUM_SPHERES = 7;
+const int NUM_SPHERES = 12;
 
 int main() {
     srand(time(NULL));
@@ -66,7 +58,7 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
-    Renderer renderer = Renderer(PerpectiveProperties(SCR_WIDTH, SCR_HEIGHT));
+    Renderer renderer = Renderer(PerpectiveProperties(SCR_WIDTH, SCR_HEIGHT), 0.02f, glm::vec3(50.0f, 50.0f, 50.0f));
     Scene* scene = renderer.getScene();
     CollisionPhysx physx = CollisionPhysx();
     scene->attachPhysics(&physx);
@@ -135,7 +127,8 @@ int main() {
 
     vector<PhysxObject> spherePhysx;
     for (int i = 0; i < NUM_SPHERES; ++i) {
-        spherePhysx.push_back(PhysxObject(PhysxShape::SPHERE, &spheres[i], ((1.0f * rand()) / RAND_MAX + 1.0f) * 5.0f, glm::vec3((((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f, (((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f, (((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f)));
+        float mass = (((1.0f * rand()) / RAND_MAX + 1.0f) * 10.0f) * glm::pow(spheres[i].radius, 3);
+        spherePhysx.push_back(PhysxObject(PhysxShape::SPHERE, &spheres[i], mass, glm::vec3((((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f, (((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f, (((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f)));
         spherePhysx[i].enableGravity();
         spherePhysx[i].enableAirResistance();
     }

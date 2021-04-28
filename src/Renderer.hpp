@@ -91,7 +91,14 @@ class Renderer {
 
     float timeStep = 0.025f;
 
-    Renderer(ProjectionType projectionType, PerpectiveProperties perpectiveProperties, glm::mat4 projectionMatrix, glm::mat4 MVPMatrix) : perpectiveProperties{perpectiveProperties} {
+    /**
+	 * @brief Construct a new Renderer object
+	 * 
+	 * @param projectionType 
+	 * @param perpectiveProperties 
+	 * @param projectionMatrix 
+	 */
+    Renderer(ProjectionType projectionType, PerpectiveProperties perpectiveProperties, glm::mat4 projectionMatrix) : perpectiveProperties{perpectiveProperties} {
         this->projectionType = projectionType;
         this->projectionMatrix = projectionMatrix;
 
@@ -100,6 +107,11 @@ class Renderer {
         this->scene = Scene();
     }
 
+    /**
+	 * @brief Construct a new Renderer object
+	 * 
+	 * @param perpectiveProperties 
+	 */
     Renderer(const PerpectiveProperties& perpectiveProperties) : perpectiveProperties{perpectiveProperties} {
         this->projectionType = PERSPECTIVE;
         this->projectionMatrix = glm::perspective(
@@ -111,6 +123,27 @@ class Renderer {
         this->camera = Camera();
         this->shader = Shader();
         this->scene = Scene();
+    }
+
+    /**
+	 * @brief Construct a new Renderer object
+	 * 
+	 * @param perpectiveProperties 
+	 * @param stepSize 
+	 * @param cameraPosition 
+	 */
+    Renderer(const PerpectiveProperties& perpectiveProperties, float stepSize, glm::vec3 cameraPosition) : perpectiveProperties{perpectiveProperties} {
+        this->projectionType = PERSPECTIVE;
+        this->projectionMatrix = glm::perspective(
+            glm::radians(perpectiveProperties.fieldOfVision),
+            (perpectiveProperties.screenWidth / perpectiveProperties.screenHeight),
+            perpectiveProperties.nearDistance,
+            perpectiveProperties.farDistance);
+
+        this->camera = Camera(cameraPosition);
+        this->shader = Shader();
+        this->scene = Scene();
+        this->timeStep = stepSize;
     }
 
     /**

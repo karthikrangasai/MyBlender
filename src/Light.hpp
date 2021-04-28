@@ -38,7 +38,7 @@ class Light {
         this->specular = glm::vec3(1.0f, 1.0f, 1.0f);
 
         this->_position[0] = 10.0f;
-        this->_position[1] = 10.0f;
+        this->_position[1] = 60.0f;
         this->_position[2] = 10.0f;
 
         this->_ambient[0] = 0.2f;

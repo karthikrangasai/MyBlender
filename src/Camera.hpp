@@ -128,8 +128,8 @@ class Camera {
 	 * Camera's Up vector is initialzed with World Up which is initialized to Y-axis.
 	 * The camers starts in the NON_PINNED state.
 	*/
-    Camera() : Origin(0.0f, 0.0f, 0.0f) {
-        this->Position = glm::vec3(50.0f, 50.0f, 50.0f);
+    Camera(glm::vec3 position = glm::vec3(0)) : Origin(0.0f, 0.0f, 0.0f) {
+        this->Position = glm::vec3(position);
         this->WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         this->Up = glm::vec3(0.0f, 1.0f, 0.0f);
         this->Center = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -298,6 +298,16 @@ class Camera {
 
         this->State = NON_PINNED;
         updateCameraVectors();
+    }
+
+    /**
+	 * @brief Set the Position of the camera.
+	 * 
+	 * @param position 
+	 */
+    void setPosition(const glm::vec3& position) {
+        this->Position = position;
+        this->updateFrontVector();
     }
 
    private:
