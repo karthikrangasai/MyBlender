@@ -978,8 +978,10 @@ EXAMPLE_RECURSIVE      = NO
 # that contain images that are to be included in the documentation (see the
 # \image command).
 
-IMAGE_PATH             = outputs/collision_one.png \
-                         outputs/collision_two.png \
+IMAGE_PATH             = outputs/collision_1.png \
+                         outputs/collision_2.png \
+                         outputs/collision_3.png \
+                         outputs/collision_4.png \
                          outputs/solar_system.png
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should

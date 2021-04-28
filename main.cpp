@@ -34,11 +34,17 @@ static void glfw_error_callback(int error, const char* description) {
 
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
+const float PLANE_SCALE = 10.0f;
+const float BOUNDING_BOX_DIST = 50.0f;
+const float VALUE_DOWN_SCALER = 2.0f;
+const int NUM_SPHERES = 7;
+
 int main() {
+    srand(time(NULL));
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
-    // const char* glsl_version = "#version 130";
+    const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -66,78 +72,93 @@ int main() {
     scene->attachPhysics(&physx);
 
     Plane groundPlane = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
-    groundPlane._translation[1] = -5.0f;
-    groundPlane._scale[0] = groundPlane._scale[1] = groundPlane._scale[2] = 5.0f;
+    groundPlane._translation[1] = -12.0f;
+    groundPlane._scale[0] = groundPlane._scale[1] = groundPlane._scale[2] = PLANE_SCALE;
     groundPlane.updateTransforms();
-    groundPlane.Odist = 0.0f;
-    groundPlane.meshes[0].material.setDiffuseColor(glm::vec3(0, 0, 1.0f));
+    groundPlane.meshes[0].material.setDiffuseColor(glm::vec3((1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX));
 
     Plane wallOne = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
-    wallOne._translation[2] = -25.0f;
-    wallOne._translation[1] = 12.0f;
-    wallOne._scale[0] = wallOne._scale[1] = wallOne._scale[2] = 5.0f;
+    wallOne._translation[2] = -BOUNDING_BOX_DIST;
+    wallOne._scale[0] = wallOne._scale[1] = wallOne._scale[2] = PLANE_SCALE;
     wallOne._rotation[0] = 90.0f;
     wallOne.updateTransforms();
-    wallOne.Odist = -25.0f;
-    wallOne.meshes[0].material.setDiffuseColor(glm::vec3(0, 0, 1.0f));
+    wallOne.meshes[0].material.setDiffuseColor(glm::vec3((1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX));
 
     Plane wallTwo = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
-    wallTwo._translation[0] = -25.0f;
-    wallTwo._translation[1] = 12.0f;
-    wallTwo._scale[0] = wallTwo._scale[1] = wallTwo._scale[2] = 5.0f;
+    wallTwo._translation[0] = -BOUNDING_BOX_DIST;
+    wallTwo._scale[0] = wallTwo._scale[1] = wallTwo._scale[2] = PLANE_SCALE;
     wallTwo._rotation[2] = 90.0f;
     wallTwo.updateTransforms();
-    wallTwo.Odist = -25.0f;
-    wallTwo.meshes[0].material.setDiffuseColor(glm::vec3(0, 0, 1.0f));
+    wallTwo.meshes[0].material.setDiffuseColor(glm::vec3((1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX));
 
     Plane wallThree = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
-    wallThree._translation[0] = 25.0f;
-    wallThree._translation[1] = 12.0f;
-    wallThree._scale[0] = wallThree._scale[1] = wallThree._scale[2] = 5.0f;
+    wallThree._translation[0] = BOUNDING_BOX_DIST;
+    wallThree._scale[0] = wallThree._scale[1] = wallThree._scale[2] = PLANE_SCALE;
     wallThree._rotation[2] = -90.0f;
     wallThree.updateTransforms();
-    wallThree.Odist = 25.0f;
-    wallThree.meshes[0].material.setDiffuseColor(glm::vec3(0, 0, 1.0f));
+    wallThree.meshes[0].material.setDiffuseColor(glm::vec3((1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX));
 
-    Sphere s1 = Sphere(1, 30);
-    s1._translation[1] = 15.0f;
-    s1.updateTransforms();
-    s1.meshes[0].material.setDiffuseColor(glm::vec3(1.0f, 0, 0));
-    // Sphere s2 = Sphere(2, 30);
-    // s2._translation[0] = -20.0f;
-    // s2.updateTransforms();
+    Plane wallFour = Plane("/home/karthikrangasai/Documents/Acads/4th Year/4 - 2/IS F311 Comp Graphics/assignment/assignment_2/problem_statement/plane.obj");
+    wallFour._translation[2] = BOUNDING_BOX_DIST;
+    wallFour._scale[0] = wallFour._scale[1] = wallFour._scale[2] = PLANE_SCALE;
+    wallFour._rotation[0] = -90.0f;
+    wallFour.updateTransforms();
+    wallFour.meshes[0].material.setDiffuseColor(glm::vec3((1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX));
+
+    vector<Sphere> spheres;
+    for (int i = 0; i < NUM_SPHERES; ++i) {
+        spheres.push_back(
+            Sphere(
+                (((1.0f * rand()) / RAND_MAX + 0.5f) * 5.0f) / VALUE_DOWN_SCALER,
+                30));
+        spheres[i]._translation[0] = (1.0f * rand()) / RAND_MAX * 30.0f;
+        spheres[i]._translation[1] = (1.0f * rand()) / RAND_MAX * 30.0f;
+        spheres[i]._translation[2] = (1.0f * rand()) / RAND_MAX * 30.0f;
+        spheres[i].updateTransforms();
+        spheres[i].meshes[0].material.setDiffuseColor(glm::vec3((1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX, (1.0f * rand()) / RAND_MAX));
+    }
 
     scene->addModel(&groundPlane);
     scene->addModel(&wallOne);
     scene->addModel(&wallTwo);
     scene->addModel(&wallThree);
-    scene->addModel(&s1);
-    // scene->addModel(&s2);
+    scene->addModel(&wallFour);
+    for (int i = 0; i < NUM_SPHERES; ++i) {
+        scene->addModel(&spheres[i]);
+    }
 
     PhysxObject gPlane = PhysxObject(PhysxShape::PLANE, &groundPlane, 2.0f, glm::vec3(0, 0, 0));
     PhysxObject gWallOne = PhysxObject(PhysxShape::PLANE, &wallOne, 2.0f, glm::vec3(0, 0, 0));
     PhysxObject gwallTwo = PhysxObject(PhysxShape::PLANE, &wallTwo, 2.0f, glm::vec3(0, 0, 0));
     PhysxObject gwallThree = PhysxObject(PhysxShape::PLANE, &wallThree, 2.0f, glm::vec3(0, 0, 0));
-    PhysxObject ps1 = PhysxObject(PhysxShape::SPHERE, &s1, 1.0f, glm::vec3(-1, 0, 0));
-    ps1.enableGravity();
-    // PhysxObject ps2 = PhysxObject(PhysxShape::SPHERE, &s2, 2, glm::vec3(20, 0, 0));
+    PhysxObject gwallFour = PhysxObject(PhysxShape::PLANE, &wallFour, 2.0f, glm::vec3(0, 0, 0));
+
+    vector<PhysxObject> spherePhysx;
+    for (int i = 0; i < NUM_SPHERES; ++i) {
+        spherePhysx.push_back(PhysxObject(PhysxShape::SPHERE, &spheres[i], ((1.0f * rand()) / RAND_MAX + 1.0f) * 5.0f, glm::vec3((((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f, (((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f, (((1.0f * rand()) / RAND_MAX) - 0.5f) * 10.0f)));
+        spherePhysx[i].enableGravity();
+        spherePhysx[i].enableAirResistance();
+    }
 
     physx.addObject(&gPlane);
     physx.addObject(&gWallOne);
     physx.addObject(&gwallTwo);
     physx.addObject(&gwallThree);
-    physx.addObject(&ps1);
-    // physx.addObject(&ps2);
-    scene->isPhysicsOn = true;
+    physx.addObject(&gwallFour);
 
-    // // ImGui Setup
-    // IMGUI_CHECKVERSION();
-    // ImGui::CreateContext();
-    // ImGuiIO& io = ImGui::GetIO();
-    // (void)io;
-    // ImGui::StyleColorsDark();
-    // ImGui_ImplGlfw_InitForOpenGL(window, true);
-    // ImGui_ImplOpenGL3_Init(glsl_version);
+    for (int i = 0; i < NUM_SPHERES; ++i) {
+        physx.addObject(&spherePhysx[i]);
+    }
+    scene->isPhysicsOn = false;
+
+    // ImGui Setup
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
     ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -152,96 +173,79 @@ int main() {
         lastFrame = currentFrame;
         processInput(window, renderer.camera);
 
-        // ImGui_ImplOpenGL3_NewFrame();
-        // ImGui_ImplGlfw_NewFrame();
-        // ImGui::NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-        // if (ImGui::Begin("Settings")) {
-        //     {
-        //         ImGui::BeginChild("Light Properties", ImVec2(0, 150), true);
-        //         ImGui::SliderFloat3("Position", renderer.scene.light._position, -60.0f, 60.0f);
-        //         // ImGui::ColorPicker3("Ambient Color", renderer.scene.light._ambient, 0);
-        //         // ImGui::ColorPicker3("Diffuse Color", renderer.scene.light._diffuse, 0);
-        //         // ImGui::ColorPicker3("Specular Color", renderer.scene.light._specular, 0);
-        //         ImGui::EndChild();
-        //         renderer.scene.light.updateLighting();
-        //     }
+        if (ImGui::Begin("Settings")) {
+            {
+                ImGui::SliderFloat3("Light Position", renderer.scene.light._position, -60.0f, 60.0f);
+                renderer.scene.light.updateLighting();
+            }
 
-        //     for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
-        //         char v[] = "Model 10 Visibility";
-        //         snprintf(v, (5 + 1 + 2 + 1 + 10 + 1), "Model %d Visibility", (i + 1));
-        //         ImGui::Checkbox(v, &(renderer.scene.models[i].visibility));
-        //     }
+            ImGui::Separator();
 
-        //     ImGui::Separator();
+            for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
+                char v[] = "Model 10";
+                snprintf(v, (5 + 1 + 2), "Model %d", (i + 1));
+                ImGui::Checkbox(v, &(renderer.scene.models[i]->visibility));
+                if ((i + 1) != renderer.scene.models.size()) {
+                    ImGui::SameLine();
+                }
+            }
 
-        //     static int modelNumber = 0;
-        //     for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
-        //         char v[] = "Model 10";
-        //         snprintf(v, (5 + 1 + 2), "Model %d", (i + 1));
-        //         ImGui::RadioButton(v, &modelNumber, i);
-        //         if ((i + 1) != renderer.scene.models.size()) {
-        //             ImGui::SameLine();
-        //         }
-        //     }
+            ImGui::Separator();
 
-        //     ImGui::Separator();
+            static int modelNumber = 0;
+            for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
+                char v[] = "Model 10";
+                snprintf(v, (5 + 1 + 2), "Model %d", (i + 1));
+                ImGui::RadioButton(v, &modelNumber, i);
+                if ((i + 1) != renderer.scene.models.size()) {
+                    ImGui::SameLine();
+                }
+            }
+            ImGui::Separator();
 
-        //     {
-        //         ImGui::BeginChild("Obj Properties Child", ImVec2(0, 100), true);
-        //         ImGui::Text("Object Transfromation Properties");
-        //         ImGui::SliderFloat3("Translation", renderer.scene.models[modelNumber]._translation, -30.0f, 30.0f);
-        //         ImGui::SliderFloat3("Rotation", renderer.scene.models[modelNumber]._rotation, 0.0f, 360.0f);
-        //         ImGui::SliderFloat3("Scale", renderer.scene.models[modelNumber]._scale, 1.0f, 10.0f);
+            {
+                ImGui::BeginChild("Camera Properties Child", ImVec2(0, 100), true);
+                ImGui::Text("Camera Properties");
+                static float speed = 2.5f;
+                static float sensitivity = 0.05f;
+                ImGui::SliderFloat("Camera Speed", &speed, 1.0f, 5.0f);
+                ImGui::SliderFloat("Camera Sensitivity", &sensitivity, 0.01f, 5.0f);
+                renderer.camera.updateCameraSpeed(speed);
+                renderer.camera.updateCameraSensitivity(sensitivity);
+                ImGui::EndChild();
+            }
 
-        //         ImGui::EndChild();
-        //         renderer.scene.models[modelNumber].updateTransforms();
-        //     }
+            ImGui::Separator();
 
-        //     ImGui::Separator();
+            if (ImGui::Button("Toggle Physics")) {
+                renderer.scene.isPhysicsOn = !renderer.scene.isPhysicsOn;
+            }
 
-        //     {
-        //         ImGui::BeginChild("Camera Properties Child", ImVec2(0, 100), true);
-        //         ImGui::Text("Camera Properties");
-        //         static float speed = 2.5f;
-        //         static float sensitivity = 0.05f;
-        //         ImGui::SliderFloat("Camera Speed", &speed, 1.0f, 5.0f);
-        //         ImGui::SliderFloat("Camera Sensitivity", &sensitivity, 0.01f, 5.0f);
-        //         renderer.camera.updateCameraSpeed(speed);
-        //         renderer.camera.updateCameraSensitivity(sensitivity);
-        //         ImGui::EndChild();
-        //     }
+            ImGui::Separator();
 
-        //     ImGui::Separator();
-
-        //     if (ImGui::Button("Reset Camera")) {
-        //         for (unsigned int i = 0; i < renderer.scene.models.size(); ++i) {
-        //             renderer.scene.models[i].reset();
-        //         }
-        //         renderer.camera.reset();
-        //     }
-
-        //     ImGui::Separator();
-
-        //     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        //     ImGui::End();
-        // }
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
 
         renderer.renderAll();
-        // ImGui::Render();
+        ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
 
-        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
     }
 
-    // ImGui_ImplOpenGL3_Shutdown();
-    // ImGui_ImplGlfw_Shutdown();
-    // ImGui::DestroyContext();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
     glfwTerminate();

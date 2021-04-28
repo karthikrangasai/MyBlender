@@ -32,7 +32,7 @@ class Light {
 	 * with default light color as white color.
 	 */
     Light() {
-        this->position = glm::vec3(10.f, 10.f, 10.f);
+        this->position = glm::vec3(10.f, 60.f, 10.f);
         this->ambient = glm::vec3(0.2f, 0.2f, 0.2f);
         this->diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
         this->specular = glm::vec3(1.0f, 1.0f, 1.0f);

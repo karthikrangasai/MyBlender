@@ -10,7 +10,7 @@
 
 #include <glm/glm/glm.hpp>
 #include <glm/glm/gtc/type_ptr.hpp>
-
+#include <cmath>
 #include "Model.hpp"
 
 #ifdef __cplusplus
@@ -52,6 +52,9 @@ typedef struct PhysxObject {
     //! Mass of the object
     float mass;
 
+    bool gravityEnabled = false;
+    bool airResistanceEnabled = false;
+
     /**
 	 * @brief Construct a new PhysxObject
 	 * 
@@ -72,7 +75,35 @@ typedef struct PhysxObject {
 	 * @brief Enables gravity for the current object.
 	 */
     void enableGravity() {
+        gravityEnabled = true;
+
         this->force = this->mass * glm::vec3(0, -g, 0);
+    }
+
+    /**
+	 * @brief Enables gravity for the current object.
+	 */
+    void enableAirResistance() {
+        airResistanceEnabled = true;
+        if (this->shape == PhysxShape::SPHERE) {
+            Sphere* s = static_cast<Sphere*>(this->model);
+            this->force += this->mass * (6.0f * 3.1415f * 0.1f * s->radius) * this->velocity;
+        }
+    }
+
+    void recomputeTotalForce() {
+        this->force = this->mass * glm::vec3(0.0f);
+
+        if (gravityEnabled) {
+            this->force += this->mass * glm::vec3(0, -g, 0);
+        }
+
+        if (airResistanceEnabled) {
+            if (this->shape == PhysxShape::SPHERE) {
+                Sphere* s = static_cast<Sphere*>(this->model);
+                this->force -= this->mass * (6.0f * 3.1415f * 0.0f * s->radius) * this->velocity;
+            }
+        }
     }
 } PhysxObject;
 
@@ -137,12 +168,10 @@ class CollisionPhysx : public Physx {
                 PhysxObject* q = objects[j];
                 if (p->shape == PLANE and q->shape == SPHERE) {
                     if (this->testPlaneSphereCollision(p, q)) {
-                        std::cout << i << " " << j << endl;
                         this->solvePlaneSphereCollision(p, q);
                     }
                 } else if (p->shape == SPHERE and q->shape == PLANE) {
                     if (this->testPlaneSphereCollision(q, p)) {
-                        std::cout << j << " " << i << endl;
                         this->solvePlaneSphereCollision(q, p);
                     }
                 } else if (p->shape == SPHERE and q->shape == SPHERE) {
@@ -157,7 +186,9 @@ class CollisionPhysx : public Physx {
             PhysxObject* p = objects[i];
             if (p->shape == PhysxShape::SPHERE) {
                 this->stepSphere(p, dt);
+                p->recomputeTotalForce();
                 p->velocity += (p->force / p->mass) * dt;
+                this->stepSphere(p, dt);
             }
         }
     }
@@ -165,19 +196,22 @@ class CollisionPhysx : public Physx {
     bool testPlaneSphereCollision(PhysxObject* plane, PhysxObject* sphere) {
         Plane* p = static_cast<Plane*>(plane->model);
         Sphere* s = static_cast<Sphere*>(sphere->model);
-        return (fabs(p->Odist + glm::dot(s->worldPosition, p->normal)) <= s->radius);
+        float dotP = glm::dot(p->normal, sphere->velocity);
+        if (dotP > 0) {
+            p->normal = -1.0f * p->normal;
+        }
+        p->updateOdist();
+        float dist = fabs(p->Odist + glm::dot(s->worldPosition, p->normal));
+        return (dist <= s->radius);
     }
 
     void solvePlaneSphereCollision(PhysxObject* plane, PhysxObject* sphere) {
         Plane* p = static_cast<Plane*>(plane->model);
-        float dotP = glm::dot(p->normal, sphere->velocity);
-        if (dotP > 0) {
-            p->normal = -p->normal;
-        }
         glm::vec3 ncap = p->normal;
         glm::vec3 lcap = glm::normalize(sphere->velocity);
         float dotnl = glm::dot(ncap, lcap);
         glm::vec3 rcap = 2 * dotnl * ncap - lcap;
+        rcap = glm::normalize(rcap);
         sphere->velocity = (-1.0f) * rcap * glm::length(sphere->velocity);
         return;
     }

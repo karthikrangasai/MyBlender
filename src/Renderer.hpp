@@ -89,6 +89,8 @@ class Renderer {
     //! @brief The current scene to be rendered.
     Scene scene;
 
+    float timeStep = 0.025f;
+
     Renderer(ProjectionType projectionType, PerpectiveProperties perpectiveProperties, glm::mat4 projectionMatrix, glm::mat4 MVPMatrix) : perpectiveProperties{perpectiveProperties} {
         this->projectionType = projectionType;
         this->projectionMatrix = projectionMatrix;
@@ -120,7 +122,7 @@ class Renderer {
         this->updateCameraPosition();
 
         if (scene.isPhysicsOn && scene.physx != nullptr) {
-            scene.physx->step(0.05f);
+            scene.physx->step(this->timeStep);
         }
 
         for (const Model* model : this->scene.models) {

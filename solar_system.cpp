@@ -119,8 +119,6 @@ int main() {
 
     ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    int count = 0;
-
     glUseProgram(renderer.shader.ID);
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -132,42 +130,44 @@ int main() {
         lastFrame = currentFrame;
         processInput(window, renderer.camera);
 
-        // ImGui_ImplOpenGL3_NewFrame();
-        // ImGui_ImplGlfw_NewFrame();
-        // ImGui::NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-        // if (ImGui::Begin("Settings")) {
-        //     {
-        //         ImGui::BeginChild("Camera Properties Child", ImVec2(0, 100), true);
-        //         ImGui::Text("Camera Properties");
-        //         static float speed = 2.5f;
-        //         static float sensitivity = 0.05f;
-        //         ImGui::SliderFloat("Camera Speed", &speed, 1.0f, 5.0f);
-        //         ImGui::SliderFloat("Camera Sensitivity", &sensitivity, 0.01f, 5.0f);
-        //         renderer.camera.updateCameraSpeed(speed);
-        //         renderer.camera.updateCameraSensitivity(sensitivity);
-        //         ImGui::EndChild();
-        //     }
-        //     ImGui::Separator();
+        if (ImGui::Begin("Settings")) {
+            {
+                ImGui::BeginChild("Camera Properties Child", ImVec2(0, 100), true);
+                ImGui::Text("Camera Properties");
+                static float speed = 2.5f;
+                static float sensitivity = 0.05f;
+                ImGui::SliderFloat("Camera Speed", &speed, 1.0f, 5.0f);
+                ImGui::SliderFloat("Camera Sensitivity", &sensitivity, 0.01f, 5.0f);
+                renderer.camera.updateCameraSpeed(speed);
+                renderer.camera.updateCameraSensitivity(sensitivity);
+                ImGui::EndChild();
+            }
+            ImGui::Separator();
 
-        //     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        //     ImGui::End();
-        // }
+            if (ImGui::Button("Toggle Physics")) {
+                renderer.scene.isPhysicsOn = !renderer.scene.isPhysicsOn;
+            }
+
+            ImGui::Separator();
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
 
         renderer.renderAll();
-        // ImGui::Render();
+        ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
 
-        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
-        ++count;
-        // if (count > 100) {
-        //     break;
-        // }
     }
 
     ImGui_ImplOpenGL3_Shutdown();

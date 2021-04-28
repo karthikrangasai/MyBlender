@@ -448,11 +448,14 @@ class Plane : public Model {
         normalRotator = glm::rotate(normalRotator, glm::radians(this->rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
         normalRotator = glm::rotate(normalRotator, glm::radians(this->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         this->normal = glm::vec3(normalRotator * glm::vec4(this->normal, 1.0f));
-
         this->normal = glm::normalize(this->normal);
-        // this->Odist = glm::dot(this->translation, this->translation);
 
+        this->updateOdist();
         this->updateModelMatrix();
+    }
+
+    void updateOdist() {
+        this->Odist = -1.0f * glm::dot(this->worldPosition, this->normal) / glm::sqrt(glm::dot(this->normal, this->normal));
     }
 
     /**

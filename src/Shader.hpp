@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 /** @class Shader
- *  @brief Defines a shader for diaplying models with color.
+ *  @brief Defines a shader for displying models with color.
  *  @details Compiles and generates a static shader that is used throughout the application. This shader can only display the diffuse color of the material.
  */
 class Shader {

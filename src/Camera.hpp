@@ -129,7 +129,7 @@ class Camera {
 	 * The camers starts in the NON_PINNED state.
 	*/
     Camera() : Origin(0.0f, 0.0f, 0.0f) {
-        this->Position = glm::vec3(0.0f, 20.0f, 20.0f);
+        this->Position = glm::vec3(50.0f, 50.0f, 50.0f);
         this->WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         this->Up = glm::vec3(0.0f, 1.0f, 0.0f);
         this->Center = glm::vec3(0.0f, 0.0f, 0.0f);
